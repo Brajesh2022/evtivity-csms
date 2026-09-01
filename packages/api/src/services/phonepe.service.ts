@@ -138,10 +138,10 @@ export interface InitiatePaymentParams {
   amountPaisa: number;
   redirectUrl: string;
   callbackUrl: string;
-  mobileNumber?: string;
+  mobileNumber?: string | undefined;
   deviceContext?: {
-    deviceOS?: 'ANDROID' | 'IOS';
-  };
+    deviceOS?: 'ANDROID' | 'IOS' | undefined;
+  } | undefined;
 }
 
 export interface InitiatePaymentResult {
@@ -150,7 +150,7 @@ export interface InitiatePaymentResult {
   message: string;
   merchantTransactionId: string;
   redirectUrl: string;
-  upiIntentUrl?: string;
+  upiIntentUrl?: string | undefined;
   rawResponse: Record<string, unknown>;
 }
 
@@ -231,8 +231,8 @@ export interface PaymentStatusResult {
   message: string;
   state: 'COMPLETED' | 'FAILED' | 'PENDING';
   amountPaisa: number;
-  transactionId?: string;
-  paymentInstrument?: Record<string, unknown>;
+  transactionId?: string | undefined;
+  paymentInstrument?: Record<string, unknown> | undefined;
 }
 
 export async function checkPhonePePaymentStatus(
@@ -279,18 +279,18 @@ export async function checkPhonePePaymentStatus(
 
 export interface RefundParams {
   merchantTransactionId: string;
-  originalTransactionId?: string;
+  originalTransactionId?: string | undefined;
   merchantUserId: string;
   amountPaisa: number;
-  callbackUrl?: string;
+  callbackUrl?: string | undefined;
 }
 
 export interface RefundResult {
   success: boolean;
   code: string;
   message: string;
-  refundTransactionId?: string;
-  state?: string;
+  refundTransactionId?: string | undefined;
+  state?: string | undefined;
 }
 
 export async function refundPhonePePayment(

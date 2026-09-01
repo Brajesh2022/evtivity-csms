@@ -9,9 +9,7 @@ import { db } from '@evtivity/database';
 import {
   chargingStations,
   evses,
-  connectors,
   paymentRecords,
-  chargingSessions,
 } from '@evtivity/database';
 import { zodSchema } from '../../lib/zod-schema.js';
 import { itemResponse, errorWith } from '../../lib/response-schemas.js';
@@ -23,7 +21,6 @@ import {
   verifyPhonePeWebhookSignature,
 } from '../../services/phonepe.service.js';
 import { checkStationOnboarded } from '../../lib/onboarding-gate.js';
-import { PORTAL_RATE_LIMITS } from '../../lib/rate-limits.js';
 import type { DriverJwtPayload } from '../../plugins/auth.js';
 
 const initiatePhonePeBody = z.object({
@@ -63,20 +60,15 @@ export async function portalPhonePeRoutes(app: FastifyInstance): Promise<void> {
         body: zodSchema(initiatePhonePeBody),
         response: {
           200: itemResponse(initiatePhonePeResponse),
-          400: errorWith('Bad request', [ERROR_CODES.BAD_REQUEST]),
-          403: errorWith('Station offline or pending', [
-            ERROR_CODES.STATION_OFFLINE,
-            ERROR_CODES.STATION_PENDING,
+          400: errorWith('Payment failed', [ERROR_CODES.PAYMENT_FAILED]),
+          403: errorWith('Station offline', [ERROR_CODES.STATION_OFFLINE]),
+          404: errorWith('Resource not found', [
+            ERROR_CODES.STATION_NOT_FOUND,
+            ERROR_CODES.EVSE_NOT_FOUND,
           ]),
           503: errorWith('Payment provider not configured', [
             ERROR_CODES.PAYMENT_PROVIDER_NOT_CONFIGURED,
           ]),
-        },
-      },
-      config: {
-        rateLimit: {
-          max: PORTAL_RATE_LIMITS.PAYMENT_SETUP_MAX,
-          timeWindow: PORTAL_RATE_LIMITS.PAYMENT_SETUP_WINDOW,
         },
       },
     },
@@ -140,14 +132,26 @@ export async function portalPhonePeRoutes(app: FastifyInstance): Promise<void> {
       const defaultRedirectUrl = `${protocol}://${host}/charge/${station.stationId}/${String(evse.evseId)}?phonepeOrderId=${merchantTransactionId}`;
       const callbackUrl = `${protocol}://${host}/v1/webhooks/phonepe`;
 
-      const result = await createPhonePePaymentOrder(config, {
+      const paymentParams: {
+        merchantTransactionId: string;
+        merchantUserId: string;
+        amountPaisa: number;
+        redirectUrl: string;
+        callbackUrl: string;
+        mobileNumber?: string;
+      } = {
         merchantTransactionId,
         merchantUserId,
         amountPaisa,
         redirectUrl: body.redirectUrl ?? defaultRedirectUrl,
         callbackUrl,
-        mobileNumber: body.mobileNumber,
-      });
+      };
+
+      if (body.mobileNumber) {
+        paymentParams.mobileNumber = body.mobileNumber;
+      }
+
+      const result = await createPhonePePaymentOrder(config, paymentParams);
 
       // Insert pending payment record
       await db.insert(paymentRecords).values({
@@ -185,7 +189,10 @@ export async function portalPhonePeRoutes(app: FastifyInstance): Promise<void> {
         params: zodSchema(statusParams),
         response: {
           200: itemResponse(phonePeStatusResponse),
-          404: errorWith('Transaction not found', [ERROR_CODES.NOT_FOUND]),
+          404: errorWith('Transaction not found', [ERROR_CODES.PAYMENT_NOT_FOUND]),
+          503: errorWith('Payment provider not configured', [
+            ERROR_CODES.PAYMENT_PROVIDER_NOT_CONFIGURED,
+          ]),
         },
       },
     },
@@ -216,7 +223,7 @@ export async function portalPhonePeRoutes(app: FastifyInstance): Promise<void> {
       );
 
       if (record == null) {
-        await reply.status(404).send({ error: 'Payment record not found', code: 'NOT_FOUND' });
+        await reply.status(404).send({ error: 'Payment record not found', code: 'PAYMENT_NOT_FOUND' });
         return;
       }
 

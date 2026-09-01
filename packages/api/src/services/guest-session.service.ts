@@ -111,6 +111,9 @@ async function finalizeGuestPayment(sessionId: string, logger: FastifyBaseLogger
       id: paymentRecords.id,
       stripePaymentIntentId: paymentRecords.stripePaymentIntentId,
       status: paymentRecords.status,
+      paymentSource: paymentRecords.paymentSource,
+      preAuthAmountCents: paymentRecords.preAuthAmountCents,
+      metadata: paymentRecords.metadata,
     })
     .from(paymentRecords)
     .where(eq(paymentRecords.sessionId, sessionId))
