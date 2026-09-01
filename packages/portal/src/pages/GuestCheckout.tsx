@@ -19,6 +19,7 @@ import { api } from '@/lib/api';
 import { formatCents } from '@/lib/utils';
 import { checkGuestConnectorStatus } from '@/lib/charger-utils';
 import { useCableCheck } from '@/hooks/use-cable-check';
+import { PhonePeCheckoutButton } from '@/components/PhonePeCheckoutButton';
 
 interface ChargerConfig {
   isFree: boolean;
@@ -26,6 +27,8 @@ interface ChargerConfig {
   publishableKey?: string;
   currency?: string;
   preAuthAmountCents?: number;
+  phonepeEnabled?: boolean;
+  phonepePreAuthPaisa?: number;
 }
 
 function FreeStartForm({
@@ -291,6 +294,8 @@ export function GuestCheckout(): React.JSX.Element {
   const [stripePromise, setStripePromise] = useState<ReturnType<typeof loadStripe> | null>(null);
   const [error, setError] = useState('');
 
+  const [paymentMode, setPaymentMode] = useState<'phonepe' | 'card'>('phonepe');
+
   useEffect(() => {
     if (stationId == null || evseId == null) return;
 
@@ -298,9 +303,14 @@ export function GuestCheckout(): React.JSX.Element {
       .get<ChargerConfig>(`/v1/portal/guest/charger-config/${stationId}/${evseId}`)
       .then((data) => {
         setConfig(data);
+        if (data.phonepeEnabled) {
+          setPaymentMode('phonepe');
+        } else {
+          setPaymentMode('card');
+        }
         if (!data.isFree && data.publishableKey != null) {
           setStripePromise(loadStripe(data.publishableKey));
-        } else if (!data.isFree) {
+        } else if (!data.isFree && !data.phonepeEnabled) {
           setError(t('guest.paymentNotConfigured'));
         }
       })
@@ -319,7 +329,7 @@ export function GuestCheckout(): React.JSX.Element {
     );
   }
 
-  if (config == null || (!config.isFree && stripePromise == null)) {
+  if (config == null || (!config.isFree && !config.phonepeEnabled && stripePromise == null)) {
     return (
       <div className="flex min-h-screen items-center justify-center">
         <p className="text-muted-foreground">{t('guest.loadingPayment')}</p>
@@ -356,16 +366,51 @@ export function GuestCheckout(): React.JSX.Element {
               evseId={evseId ?? ''}
               isSimulator={config.isSimulator === true}
             />
-          ) : stripePromise != null ? (
-            <Elements stripe={stripePromise}>
-              <CheckoutForm
-                stationId={stationId ?? ''}
-                evseId={evseId ?? ''}
-                config={config}
-                isSimulator={config.isSimulator === true}
-              />
-            </Elements>
-          ) : null}
+          ) : (
+            <div className="space-y-4">
+              {config.phonepeEnabled && stripePromise != null && (
+                <div className="grid grid-cols-2 gap-2 p-1 bg-muted rounded-lg text-sm font-medium">
+                  <button
+                    type="button"
+                    className={`py-1.5 rounded-md transition-all ${paymentMode === 'phonepe' ? 'bg-background shadow-sm text-foreground' : 'text-muted-foreground'}`}
+                    onClick={() => setPaymentMode('phonepe')}
+                  >
+                    PhonePe / UPI
+                  </button>
+                  <button
+                    type="button"
+                    className={`py-1.5 rounded-md transition-all ${paymentMode === 'card' ? 'bg-background shadow-sm text-foreground' : 'text-muted-foreground'}`}
+                    onClick={() => setPaymentMode('card')}
+                  >
+                    Card
+                  </button>
+                </div>
+              )}
+
+              {config.phonepeEnabled && (paymentMode === 'phonepe' || stripePromise == null) ? (
+                <div className="space-y-4">
+                  <p className="text-sm text-muted-foreground">
+                    Instant UPI payment via PhonePe, GPay, Paytm or any UPI App. Unused balance is refunded automatically.
+                  </p>
+                  <PhonePeCheckoutButton
+                    stationId={stationId ?? ''}
+                    evseId={evseId ?? ''}
+                    amountPaisa={config.phonepePreAuthPaisa ?? 10000}
+                    onError={(err) => setError(err)}
+                  />
+                </div>
+              ) : stripePromise != null ? (
+                <Elements stripe={stripePromise}>
+                  <CheckoutForm
+                    stationId={stationId ?? ''}
+                    evseId={evseId ?? ''}
+                    config={config}
+                    isSimulator={config.isSimulator === true}
+                  />
+                </Elements>
+              ) : null}
+            </div>
+          )}
         </CardContent>
       </Card>
       <AuthFooter companyName={companyName} branding={branding} />

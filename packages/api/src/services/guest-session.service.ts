@@ -5,6 +5,7 @@ import { eq, and } from 'drizzle-orm';
 import { db, client } from '@evtivity/database';
 import { guestSessions, chargingSessions, paymentRecords } from '@evtivity/database';
 import { getStripeConfig, capturePayment, cancelPaymentIntent } from './stripe.service.js';
+import { getPhonePeConfig, refundPhonePePayment } from './phonepe.service.js';
 import { chargingStations } from '@evtivity/database';
 import { dispatchSystemNotification } from '@evtivity/lib';
 import type { FastifyBaseLogger } from 'fastify';
@@ -133,7 +134,7 @@ async function finalizeGuestPayment(sessionId: string, logger: FastifyBaseLogger
   }
 
   // No payment record means free session: mark completed, send receipt, and return
-  if (pr?.stripePaymentIntentId == null) {
+  if (pr == null || (pr.stripePaymentIntentId == null && pr.paymentSource !== 'phonepe')) {
     await db
       .update(guestSessions)
       .set({ status: 'completed', updatedAt: new Date() })
@@ -154,6 +155,83 @@ async function finalizeGuestPayment(sessionId: string, logger: FastifyBaseLogger
 
   if (session == null) return;
 
+  // Handle PhonePe settlement & automated partial refund
+  if (pr.paymentSource === 'phonepe') {
+    const phonePeConfig = await getPhonePeConfig();
+    const finalCost = session.finalCostCents ?? 0;
+    const preAuth = pr.preAuthAmountCents ?? 10000;
+    const metadata = (pr.metadata as Record<string, unknown>) ?? {};
+    const orderId = (metadata.phonepeOrderId as string) ?? '';
+
+    try {
+      if (phonePeConfig != null && orderId !== '') {
+        if (finalCost <= 0) {
+          // Full refund for cancelled / 0 cost
+          const refundTxnId = `RF_${Date.now()}_${Math.random().toString(36).substring(2, 8)}`;
+          await refundPhonePePayment(phonePeConfig, {
+            merchantTransactionId: refundTxnId,
+            originalTransactionId: orderId,
+            merchantUserId: (metadata.merchantUserId as string) ?? 'guest',
+            amountPaisa: preAuth,
+          });
+          await db
+            .update(paymentRecords)
+            .set({
+              status: 'refunded',
+              capturedAmountCents: 0,
+              refundedAmountCents: preAuth,
+              updatedAt: new Date(),
+            })
+            .where(eq(paymentRecords.id, pr.id));
+        } else if (preAuth > finalCost) {
+          // Instant automated partial refund of surplus advance (e.g. ₹100 preauth, ₹80 finalCost => ₹20 refunded)
+          const refundAmount = preAuth - finalCost;
+          const refundTxnId = `RF_${Date.now()}_${Math.random().toString(36).substring(2, 8)}`;
+          await refundPhonePePayment(phonePeConfig, {
+            merchantTransactionId: refundTxnId,
+            originalTransactionId: orderId,
+            merchantUserId: (metadata.merchantUserId as string) ?? 'guest',
+            amountPaisa: refundAmount,
+          });
+          await db
+            .update(paymentRecords)
+            .set({
+              status: 'captured',
+              capturedAmountCents: finalCost,
+              refundedAmountCents: refundAmount,
+              updatedAt: new Date(),
+            })
+            .where(eq(paymentRecords.id, pr.id));
+        } else {
+          await db
+            .update(paymentRecords)
+            .set({
+              status: 'captured',
+              capturedAmountCents: preAuth,
+              refundedAmountCents: 0,
+              updatedAt: new Date(),
+            })
+            .where(eq(paymentRecords.id, pr.id));
+        }
+      }
+
+      await db
+        .update(guestSessions)
+        .set({ status: 'completed', updatedAt: new Date() })
+        .where(eq(guestSessions.id, guest.id));
+
+      await sendGuestReceipt(guest, sessionId, logger);
+    } catch (err: unknown) {
+      logger.error({ err, guestSessionId: guest.id }, 'Failed to finalize PhonePe payment');
+      const reason = err instanceof Error ? err.message.slice(0, 500) : 'Unknown payment error';
+      await db
+        .update(paymentRecords)
+        .set({ status: 'failed', failureReason: reason, updatedAt: new Date() })
+        .where(eq(paymentRecords.id, pr.id));
+    }
+    return;
+  }
+
   // Get site for Stripe config
   const [station] = await db
     .select({ siteId: chargingStations.siteId })
@@ -161,7 +239,7 @@ async function finalizeGuestPayment(sessionId: string, logger: FastifyBaseLogger
     .where(eq(chargingStations.id, session.stationId));
 
   const config = await getStripeConfig(station?.siteId ?? null);
-  if (config == null) {
+  if (config == null || pr.stripePaymentIntentId == null) {
     logger.error({ guestSessionId: guest.id }, 'No Stripe config for guest payment capture');
     await db
       .update(guestSessions)

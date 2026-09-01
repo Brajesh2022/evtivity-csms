@@ -12,6 +12,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { PasswordInput } from '@/components/ui/password-input';
 import { Label } from '@/components/ui/label';
+import { Checkbox } from '@/components/ui/checkbox';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { api } from '@/lib/api';
 
@@ -25,6 +26,15 @@ interface StripeSettings {
   currency: string;
   preAuthAmountCents: number;
   platformFeePercent: number;
+}
+
+interface PhonePeSettings {
+  merchantId: string | null;
+  saltKey: string | null;
+  saltIndex: string | number;
+  environment: 'sandbox' | 'production';
+  enabled: boolean;
+  defaultPreAuthAmountPaisa: number;
 }
 
 interface SiteListItem {
@@ -46,7 +56,7 @@ export function PaymentSettings({ settings }: PaymentSettingsProps): React.JSX.E
   const { t } = useTranslation();
   const queryClient = useQueryClient();
 
-  const [paymentSubTab, setPaymentSubTab] = useTab('stripe', 'sub');
+  const [paymentSubTab, setPaymentSubTab] = useTab('phonepe', 'sub');
 
   const [stripeSecretKey, setStripeSecretKey] = useState('');
   const [stripePublishableKey, setStripePublishableKey] = useState('');
@@ -54,6 +64,13 @@ export function PaymentSettings({ settings }: PaymentSettingsProps): React.JSX.E
   const [stripePreAuthCents, setStripePreAuthCents] = useState('5000');
   const [stripePlatformFee, setStripePlatformFee] = useState('0');
   const [selectedSiteId, setSelectedSiteId] = useState<string | null>(null);
+
+  const [phonepeMerchantId, setPhonepeMerchantId] = useState('');
+  const [phonepeSaltKey, setPhonepeSaltKey] = useState('');
+  const [phonepeSaltIndex, setPhonepeSaltIndex] = useState('1');
+  const [phonepeEnvironment, setPhonepeEnvironment] = useState<'sandbox' | 'production'>('sandbox');
+  const [phonepeEnabled, setPhonepeEnabled] = useState(false);
+  const [phonepePreAuthPaisa, setPhonepePreAuthPaisa] = useState('10000');
 
   const [siteConnectedAccountId, setSiteConnectedAccountId] = useState('');
   const [siteCurrency, setSiteCurrency] = useState('USD');
@@ -63,6 +80,11 @@ export function PaymentSettings({ settings }: PaymentSettingsProps): React.JSX.E
   const { data: stripeSettings } = useQuery({
     queryKey: ['stripe-settings'],
     queryFn: () => api.get<StripeSettings>('/v1/settings/stripe'),
+  });
+
+  const { data: phonepeSettings } = useQuery({
+    queryKey: ['phonepe-settings'],
+    queryFn: () => api.get<PhonePeSettings>('/v1/settings/phonepe'),
   });
 
   const { data: siteList } = useQuery({
@@ -138,6 +160,31 @@ export function PaymentSettings({ settings }: PaymentSettingsProps): React.JSX.E
     setStripePlatformFee(String(stripeSettings.platformFeePercent));
   }, [stripeSettings]);
 
+  useEffect(() => {
+    if (phonepeSettings == null) return;
+    setPhonepeMerchantId(phonepeSettings.merchantId ?? '');
+    setPhonepeSaltKey(phonepeSettings.saltKey ?? '');
+    setPhonepeSaltIndex(String(phonepeSettings.saltIndex ?? '1'));
+    setPhonepeEnvironment(phonepeSettings.environment ?? 'sandbox');
+    setPhonepeEnabled(phonepeSettings.enabled ?? false);
+    setPhonepePreAuthPaisa(String(phonepeSettings.defaultPreAuthAmountPaisa ?? 10000));
+  }, [phonepeSettings]);
+
+  const phonepeSaveMutation = useMutation({
+    mutationFn: (vals: {
+      merchantId?: string;
+      saltKey?: string;
+      saltIndex?: string | number;
+      environment?: 'sandbox' | 'production';
+      enabled?: boolean;
+      defaultPreAuthAmountPaisa?: number;
+    }) => api.put('/v1/settings/phonepe', vals),
+    onSuccess: () => {
+      void queryClient.invalidateQueries({ queryKey: ['phonepe-settings'] });
+      void queryClient.invalidateQueries({ queryKey: ['settings'] });
+    },
+  });
+
   const stripeSaveMutation = useMutation({
     mutationFn: (vals: {
       secretKey?: string;
@@ -190,9 +237,122 @@ export function PaymentSettings({ settings }: PaymentSettingsProps): React.JSX.E
   return (
     <Tabs value={paymentSubTab} onValueChange={setPaymentSubTab}>
       <TabsList>
+        <TabsTrigger value="phonepe">PhonePe (UPI)</TabsTrigger>
         <TabsTrigger value="stripe">{t('settings.paymentSubTabStripe')}</TabsTrigger>
         <TabsTrigger value="siteConfigs">{t('settings.paymentSubTabSiteConfigs')}</TabsTrigger>
       </TabsList>
+      <TabsContent value="phonepe" className="mt-4">
+        <Card>
+          <CardHeader>
+            <CardTitle>PhonePe Payment Gateway (India / UPI)</CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <p className="text-sm text-muted-foreground">
+              Configure PhonePe UPI Intent and Payment Gateway for seamless EV charging in India.
+              Supports automatic instant partial refunds when actual energy consumption is less than advance deposit.
+            </p>
+
+            <div className="flex items-center space-x-2 pt-2 pb-2">
+              <Checkbox
+                id="phonepe-enabled"
+                checked={phonepeEnabled}
+                onCheckedChange={(checked) => setPhonepeEnabled(Boolean(checked))}
+              />
+              <Label htmlFor="phonepe-enabled" className="cursor-pointer font-medium">
+                Enable PhonePe Gateway
+              </Label>
+            </div>
+
+            <div className="grid gap-4 sm:grid-cols-2">
+              <div className="space-y-2">
+                <Label htmlFor="phonepe-merchant-id">Merchant ID (MID)</Label>
+                <Input
+                  id="phonepe-merchant-id"
+                  value={phonepeMerchantId}
+                  onChange={(e) => setPhonepeMerchantId(e.target.value)}
+                  placeholder="PGTESTPAYUAT"
+                />
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="phonepe-environment">Environment</Label>
+                <select
+                  id="phonepe-environment"
+                  className="flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-sm transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
+                  value={phonepeEnvironment}
+                  onChange={(e) => setPhonepeEnvironment(e.target.value as 'sandbox' | 'production')}
+                >
+                  <option value="sandbox">Sandbox / UAT (Testing)</option>
+                  <option value="production">Production (Live)</option>
+                </select>
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="phonepe-salt-key">Salt Key</Label>
+                <PasswordInput
+                  id="phonepe-salt-key"
+                  value={phonepeSaltKey}
+                  onChange={(e) => setPhonepeSaltKey(e.target.value)}
+                  placeholder={
+                    settings != null &&
+                    typeof settings['phonepe.saltKeyEnc'] === 'string' &&
+                    settings['phonepe.saltKeyEnc'] !== ''
+                      ? '********'
+                      : '099eb0cd-02cf-4e2a-8aca-3e6c6aff0399'
+                  }
+                />
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="phonepe-salt-index">Salt Index</Label>
+                <Input
+                  id="phonepe-salt-index"
+                  value={phonepeSaltIndex}
+                  onChange={(e) => setPhonepeSaltIndex(e.target.value)}
+                  placeholder="1"
+                />
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="phonepe-preauth">Default Advance Deposit (in Paisa)</Label>
+                <Input
+                  id="phonepe-preauth"
+                  type="number"
+                  value={phonepePreAuthPaisa}
+                  onChange={(e) => setPhonepePreAuthPaisa(e.target.value)}
+                  placeholder="10000"
+                />
+                <p className="text-xs text-muted-foreground">
+                  10000 paisa = ₹100. Unused energy balance is automatically refunded upon session finish.
+                </p>
+              </div>
+            </div>
+
+            <div className="flex justify-end gap-2 pt-4">
+              <SaveButton
+                isPending={phonepeSaveMutation.isPending}
+                type="button"
+                onClick={() => {
+                  phonepeSaveMutation.mutate({
+                    merchantId: phonepeMerchantId,
+                    saltKey: phonepeSaltKey !== '' ? phonepeSaltKey : undefined,
+                    saltIndex: phonepeSaltIndex,
+                    environment: phonepeEnvironment,
+                    enabled: phonepeEnabled,
+                    defaultPreAuthAmountPaisa: Number(phonepePreAuthPaisa),
+                  });
+                }}
+              />
+            </div>
+            {phonepeSaveMutation.isSuccess && (
+              <p className="text-sm text-green-600">PhonePe settings saved successfully.</p>
+            )}
+            {phonepeSaveMutation.isError && (
+              <p className="text-sm text-destructive">Failed to save PhonePe settings.</p>
+            )}
+          </CardContent>
+        </Card>
+      </TabsContent>
       <TabsContent value="stripe" className="mt-4">
         <Card>
           <CardHeader>

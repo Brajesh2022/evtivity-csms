@@ -31,6 +31,7 @@ import {
   setCachedConnectorStatus,
 } from '../../lib/rate-limiters.js';
 import { getStripeConfig } from '../../services/stripe.service.js';
+import { getPhonePeConfig } from '../../services/phonepe.service.js';
 import { resolveTariff, isTariffFree } from '../../services/tariff.service.js';
 import { isEvseInReservationBuffer } from '../../lib/reservation-buffer.js';
 import { getActiveMaintenanceForStation } from '../../services/maintenance.service.js';
@@ -60,7 +61,7 @@ const chargerConfigResponse = z
   .object({
     paymentEnabled: z
       .boolean()
-      .describe('Whether Stripe is configured for this station and payment is required'),
+      .describe('Whether payment gateway is configured for this station and payment is required'),
     isFree: z.boolean().describe('Whether the station is free to use (no payment required)'),
     publishableKey: z
       .string()
@@ -74,6 +75,8 @@ const chargerConfigResponse = z
       .min(0)
       .optional()
       .describe('Pre-authorization hold amount in cents'),
+    phonepeEnabled: z.boolean().optional().describe('Whether PhonePe UPI gateway is enabled'),
+    phonepePreAuthPaisa: z.number().optional().describe('Default PhonePe advance amount in paisa'),
     pricing: guestPricingInfo
       .optional()
       .describe('Resolved pricing for this station (null when no tariff is assigned)'),
@@ -366,7 +369,9 @@ export function portalGuestRoutes(app: FastifyInstance): void {
             : undefined;
 
       const config = await getStripeConfig(station.siteId ?? null);
-      if (config == null) {
+      const phonePeConfig = await getPhonePeConfig();
+
+      if (config == null && (phonePeConfig == null || !phonePeConfig.isEnabled)) {
         return { paymentEnabled: false, isFree, isSimulator: station.isSimulator, pricing };
       }
 
@@ -374,9 +379,11 @@ export function portalGuestRoutes(app: FastifyInstance): void {
         paymentEnabled: true,
         isFree,
         isSimulator: station.isSimulator,
-        publishableKey: config.publishableKey,
-        currency: config.currency,
-        preAuthAmountCents: config.preAuthAmountCents,
+        publishableKey: config?.publishableKey,
+        currency: config?.currency ?? 'INR',
+        preAuthAmountCents: config?.preAuthAmountCents,
+        phonepeEnabled: phonePeConfig != null && phonePeConfig.isEnabled,
+        phonepePreAuthPaisa: phonePeConfig?.defaultPreAuthAmountPaisa,
         pricing,
       };
     },

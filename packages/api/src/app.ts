@@ -49,6 +49,7 @@ import { notificationRoutes } from './routes/notifications.js';
 import { portalAuthRoutes } from './routes/portal/auth.js';
 import { portalDriverRoutes } from './routes/portal/driver.js';
 import { portalPaymentRoutes } from './routes/portal/payments.js';
+import { portalPhonePeRoutes } from './routes/portal/phonepe.js';
 import { portalSessionRoutes } from './routes/portal/sessions.js';
 import { portalChargerRoutes } from './routes/portal/charger.js';
 import { portalGuestRoutes } from './routes/portal/guest.js';
@@ -203,6 +204,7 @@ export async function buildApp(opts: FastifyServerOptions = {}): Promise<Fastify
       await v1.register(portalAuthRoutes);
       await v1.register(portalDriverRoutes);
       await v1.register(portalPaymentRoutes);
+      await v1.register(portalPhonePeRoutes);
       await v1.register(portalSessionRoutes);
       await v1.register(portalChargerRoutes);
       await v1.register(portalGuestRoutes);
@@ -343,6 +345,7 @@ export async function buildApp(opts: FastifyServerOptions = {}): Promise<Fastify
     '/v1/portal/auth/mfa/resend',
     '/v1/portal/auth/attest/challenge',
     '/v1/portal/auth/attest/register',
+    '/v1/portal/payments/phonepe/initiate',
   ]);
   const CSRF_SKIP_METHODS = new Set(['GET', 'HEAD', 'OPTIONS']);
 

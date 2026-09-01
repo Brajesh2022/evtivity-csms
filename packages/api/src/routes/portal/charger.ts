@@ -50,6 +50,7 @@ import {
 } from '../../lib/rate-limiters.js';
 import type { DriverJwtPayload } from '../../plugins/auth.js';
 import { getStripeConfig, createPreAuthorization } from '../../services/stripe.service.js';
+import { getPhonePeConfig } from '../../services/phonepe.service.js';
 import { isSimulatedCustomer } from '@evtivity/lib';
 import { resolveTariff, isTariffFree } from '../../services/tariff.service.js';
 import { dispatchDriverNotification } from '@evtivity/lib';
@@ -87,7 +88,9 @@ const portalChargerDetail = z
     siteState: z.string().max(100).nullable().describe('State or region'),
     paymentEnabled: z
       .boolean()
-      .describe('Whether Stripe is configured for this site and payment is required'),
+      .describe('Whether payment gateway is configured for this site and payment is required'),
+    phonepeEnabled: z.boolean().optional().describe('Whether PhonePe UPI gateway is enabled'),
+    phonepePreAuthPaisa: z.number().optional().describe('Default PhonePe advance amount in paisa'),
     evse: z
       .object({
         evseId: z.number().int().min(1).describe('EVSE ID on the station'),
@@ -110,7 +113,7 @@ const portalChargerDetail = z
       })
       .passthrough()
       .nullable()
-      .describe('Active maintenance window for the site; null when none'),
+      .describe('Active maintenance window context, null when no maintenance is active'),
   })
   .passthrough();
 
@@ -156,7 +159,8 @@ const portalStationDetail = z
       .describe('Public site contact phone (null when contact is private)'),
     paymentEnabled: z
       .boolean()
-      .describe('Whether Stripe is configured for this site and payment is required'),
+      .describe('Whether payment gateway is configured for this site and payment is required'),
+    phonepeEnabled: z.boolean().optional().describe('Whether PhonePe UPI gateway is enabled'),
     evses: z.array(portalEvseItem).describe('All EVSEs on the station'),
     maintenance: z
       .object({
@@ -543,6 +547,7 @@ export function portalChargerRoutes(app: FastifyInstance): void {
       }
 
       const config = await getStripeConfig(station.siteId ?? null);
+      const phonePeConfig = await getPhonePeConfig();
       const maintenance = await getMaintenancePayloadForStation(station.id);
 
       return {
@@ -555,7 +560,9 @@ export function portalChargerRoutes(app: FastifyInstance): void {
         siteAddress: station.siteAddress,
         siteCity: station.siteCity,
         siteState: station.siteState,
-        paymentEnabled: config != null,
+        paymentEnabled: config != null || (phonePeConfig != null && phonePeConfig.isEnabled),
+        phonepeEnabled: phonePeConfig != null && phonePeConfig.isEnabled,
+        phonepePreAuthPaisa: phonePeConfig?.defaultPreAuthAmountPaisa,
         evse: {
           evseId: evse.evseId,
           connectors: evseConnectors,
@@ -1379,6 +1386,7 @@ export function portalChargerRoutes(app: FastifyInstance): void {
       }
 
       const config = await getStripeConfig(station.siteId ?? null);
+      const phonePeConfig = await getPhonePeConfig();
 
       const isContactPublic = station.siteContactIsPublic === true;
       const maintenance = await getMaintenancePayloadForStation(station.id);
@@ -1396,7 +1404,8 @@ export function portalChargerRoutes(app: FastifyInstance): void {
         siteContactName: isContactPublic ? station.siteContactName : null,
         siteContactEmail: isContactPublic ? station.siteContactEmail : null,
         siteContactPhone: isContactPublic ? station.siteContactPhone : null,
-        paymentEnabled: config != null,
+        paymentEnabled: config != null || (phonePeConfig != null && phonePeConfig.isEnabled),
+        phonepeEnabled: phonePeConfig != null && phonePeConfig.isEnabled,
         evses: Array.from(evseMap.values()).map((e) => ({
           evseId: e.evseId,
           connectors: e.connectors,

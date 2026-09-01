@@ -41,6 +41,7 @@ import {
 import { formatConnectorType } from '@/lib/charger-utils';
 import { useStationEvents } from '@/hooks/use-station-events';
 import { useCableCheck } from '@/hooks/use-cable-check';
+import { PhonePeCheckoutButton } from '@/components/PhonePeCheckoutButton';
 
 interface ConnectorItem {
   connectorId: number;
@@ -77,6 +78,8 @@ interface StationDetail {
   siteContactEmail: string | null;
   siteContactPhone: string | null;
   paymentEnabled: boolean;
+  phonepeEnabled?: boolean;
+  phonepePreAuthPaisa?: number;
   evses: EvseItem[];
   maintenance: MaintenanceInfo | null;
 }
@@ -798,10 +801,19 @@ export function ChargerDetail({ mode = 'charge' }: ChargerDetailProps = {}): Rea
 
       {/* Start button */}
       {showStartButton && (
-        <div className="space-y-2">
+        <div className="space-y-3">
           {error !== '' && <p className="text-sm text-destructive">{error}</p>}
+          {station.phonepeEnabled === true && selectedEvse != null && (
+            <PhonePeCheckoutButton
+              stationId={station.stationId}
+              evseId={selectedEvse.evseId}
+              amountPaisa={station.phonepePreAuthPaisa ?? 10000}
+              onError={(err) => setError(err)}
+            />
+          )}
           <Button
             className="w-full gap-2"
+            variant={station.phonepeEnabled === true ? 'outline' : 'default'}
             size="lg"
             disabled={isStarting || isCheckingStatus}
             onClick={() => void handleStart()}

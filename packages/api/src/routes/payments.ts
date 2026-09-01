@@ -79,6 +79,26 @@ const stripeSettingsResponse = z
   })
   .passthrough();
 
+const phonePeSettingsResponse = z
+  .object({
+    merchantId: z.string().nullable().describe('PhonePe Merchant ID (MID)'),
+    saltKey: z.string().nullable().describe('PhonePe Salt Key (decrypted; null when unset)'),
+    saltIndex: z.union([z.string(), z.number()]).describe('PhonePe Salt Index (e.g. 1)'),
+    environment: z.enum(['sandbox', 'production']).describe('PhonePe environment mode'),
+    enabled: z.boolean().describe('Whether PhonePe is enabled'),
+    defaultPreAuthAmountPaisa: z.number().int().describe('Default advance deposit in paisa'),
+  })
+  .passthrough();
+
+const updatePhonePeSettingsBody = z.object({
+  merchantId: z.string().optional(),
+  saltKey: z.string().optional(),
+  saltIndex: z.union([z.string(), z.number()]).optional(),
+  environment: z.enum(['sandbox', 'production']).optional(),
+  enabled: z.boolean().optional(),
+  defaultPreAuthAmountPaisa: z.number().int().min(100).optional(),
+});
+
 const driverPaymentMethodItem = z
   .object({
     id: z.string().describe('Payment method ID'),
@@ -249,6 +269,7 @@ import {
   detachPaymentMethod,
   clearConfigCache,
 } from '../services/stripe.service.js';
+import { clearPhonePeConfigCache } from '../services/phonepe.service.js';
 
 const siteIdParams = z.object({ id: ID_PARAMS.siteId.describe('Site ID') });
 const driverIdParams = z.object({ id: ID_PARAMS.driverId.describe('Driver ID') });
@@ -688,6 +709,138 @@ export function paymentRoutes(app: FastifyInstance): void {
       }
 
       clearConfigCache();
+
+      const actor = getAuditActor(request);
+      await Promise.allSettled(
+        pairs
+          .filter(({ key, value }) => beforeMap.get(key) !== value)
+          .map(({ key, value }) =>
+            writeAudit(
+              { table: settingAuditLog, idColumn: 'setting_key' },
+              {
+                entityId: key,
+                entityIdSnapshot: key,
+                action: 'updated',
+                ...actor,
+                before: { key, value: beforeMap.get(key) },
+                after: { key, value },
+              },
+              db,
+              request.log,
+            ),
+          ),
+      );
+
+      return { success: true };
+    },
+  );
+
+  // ---- PhonePe Settings ----
+
+  app.get(
+    '/settings/phonepe',
+    {
+      onRequest: [authorize('payments:read')],
+      schema: {
+        tags: ['Payments'],
+        summary: 'Get PhonePe payment gateway settings',
+        operationId: 'getPhonePeSettings',
+        security: [{ bearerAuth: [] }],
+        response: { 200: itemResponse(phonePeSettingsResponse) },
+      },
+    },
+    async () => {
+      const rows = await db.select().from(settings).where(like(settings.key, 'phonepe.%'));
+      const map = new Map<string, unknown>();
+      for (const row of rows) {
+        map.set(row.key, row.value);
+      }
+      const rawSecret = map.get('phonepe.saltKeyEnc');
+      const encryptionKey = getEncryptionKey();
+      let saltKey: string | null = null;
+      if (typeof rawSecret === 'string' && rawSecret !== '' && encryptionKey !== '') {
+        try {
+          saltKey = decryptString(rawSecret, encryptionKey);
+        } catch {
+          saltKey = null;
+        }
+      }
+      return {
+        merchantId: (map.get('phonepe.merchantId') as string | undefined) ?? null,
+        saltKey,
+        saltIndex: (map.get('phonepe.saltIndex') as string | number | undefined) ?? 1,
+        environment: ((map.get('phonepe.environment') as string | undefined) === 'production'
+          ? 'production'
+          : 'sandbox') as 'sandbox' | 'production',
+        enabled: Boolean(map.get('phonepe.enabled') ?? false),
+        defaultPreAuthAmountPaisa: Number(map.get('phonepe.defaultPreAuthAmountPaisa') ?? 10000),
+      };
+    },
+  );
+
+  app.put(
+    '/settings/phonepe',
+    {
+      onRequest: [authorize('payments:write')],
+      schema: {
+        tags: ['Payments'],
+        summary: 'Update PhonePe payment gateway settings',
+        operationId: 'updatePhonePeSettings',
+        security: [{ bearerAuth: [] }],
+        body: zodSchema(updatePhonePeSettingsBody),
+        response: { 200: successResponse },
+      },
+    },
+    async (request) => {
+      const body = request.body as z.infer<typeof updatePhonePeSettingsBody>;
+      const encryptionKey = getEncryptionKey();
+
+      const pairs: Array<{ key: string; value: unknown }> = [];
+
+      if (body.merchantId != null) {
+        pairs.push({ key: 'phonepe.merchantId', value: body.merchantId.trim() });
+      }
+      if (body.saltKey != null && body.saltKey.trim() !== '') {
+        pairs.push({
+          key: 'phonepe.saltKeyEnc',
+          value: encryptString(body.saltKey.trim(), encryptionKey),
+        });
+      }
+      if (body.saltIndex != null) {
+        pairs.push({ key: 'phonepe.saltIndex', value: body.saltIndex });
+      }
+      if (body.environment != null) {
+        pairs.push({ key: 'phonepe.environment', value: body.environment });
+      }
+      if (body.enabled != null) {
+        pairs.push({ key: 'phonepe.enabled', value: body.enabled });
+      }
+      if (body.defaultPreAuthAmountPaisa != null) {
+        pairs.push({
+          key: 'phonepe.defaultPreAuthAmountPaisa',
+          value: body.defaultPreAuthAmountPaisa,
+        });
+      }
+
+      const keysToWrite = pairs.map((p) => p.key);
+      const beforeRows =
+        keysToWrite.length > 0
+          ? await db.select().from(settings).where(inArray(settings.key, keysToWrite))
+          : [];
+      const beforeMap = new Map<string, unknown>();
+      for (const row of beforeRows) beforeMap.set(row.key, row.value);
+
+      for (const { key, value } of pairs) {
+        await db
+          .insert(settings)
+          .values({ key, value })
+          .onConflictDoUpdate({
+            target: settings.key,
+            set: { value, updatedAt: new Date() },
+          });
+      }
+
+      clearPhonePeConfigCache();
 
       const actor = getAuditActor(request);
       await Promise.allSettled(
