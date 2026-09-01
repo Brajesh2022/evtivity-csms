@@ -334,6 +334,7 @@ export async function buildApp(opts: FastifyServerOptions = {}): Promise<Fastify
   const CSRF_SKIP_PATHS = new Set([
     '/v1/portal/auth/login',
     '/v1/portal/auth/register',
+    '/v1/portal/auth/device-session',
     '/v1/portal/auth/refresh',
     '/v1/portal/auth/verify-email',
     '/v1/portal/auth/forgot-password',
