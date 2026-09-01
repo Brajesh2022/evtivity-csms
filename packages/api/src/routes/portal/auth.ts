@@ -393,7 +393,7 @@ export function portalAuthRoutes(app: FastifyInstance): void {
         .orderBy(desc(refreshTokens.createdAt))
         .limit(1);
 
-      let driver: z.infer<typeof portalDriverItem> | null = null;
+      let driver: typeof driverSelect | { id: string; firstName: string; lastName: string; email: string | null; phone: string | null; language: string; timezone: string; themePreference: string; distanceUnit: string; isActive: boolean; emailVerified: boolean; createdAt: Date; } | null = null;
       if (existingToken?.driverId != null) {
         const [found] = await db
           .select(driverSelect)
@@ -445,7 +445,26 @@ export function portalAuthRoutes(app: FastifyInstance): void {
 
       // Ensure device id is passed in header so issueDriverSession / createRefreshToken stores it
       (request.headers as Record<string, string>)['x-device-id'] = deviceId;
-      await issueDriverSession(app, request, reply, driver, { status: 200 });
+      await issueDriverSession(
+        app,
+        request,
+        reply,
+        {
+          id: driver.id,
+          firstName: driver.firstName,
+          lastName: driver.lastName,
+          email: driver.email,
+          phone: driver.phone,
+          language: driver.language,
+          timezone: driver.timezone,
+          themePreference: (driver.themePreference === 'dark' ? 'dark' : 'light') as 'light' | 'dark',
+          distanceUnit: (driver.distanceUnit === 'km' ? 'km' : 'miles') as 'miles' | 'km',
+          isActive: driver.isActive,
+          emailVerified: driver.emailVerified,
+          createdAt: driver.createdAt,
+        },
+        { status: 200 },
+      );
     },
   );
 
@@ -511,7 +530,22 @@ export function portalAuthRoutes(app: FastifyInstance): void {
         return;
       }
 
-      return { driver: updated };
+      return {
+        driver: {
+          id: updated.id,
+          firstName: updated.firstName,
+          lastName: updated.lastName,
+          email: updated.email,
+          phone: updated.phone,
+          language: updated.language,
+          timezone: updated.timezone,
+          themePreference: (updated.themePreference === 'dark' ? 'dark' : 'light') as 'light' | 'dark',
+          distanceUnit: (updated.distanceUnit === 'km' ? 'km' : 'miles') as 'miles' | 'km',
+          isActive: updated.isActive,
+          emailVerified: updated.emailVerified,
+          createdAt: updated.createdAt,
+        },
+      };
     },
   );
 
