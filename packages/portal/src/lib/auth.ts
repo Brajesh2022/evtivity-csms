@@ -18,6 +18,19 @@ interface Driver {
   distanceUnit: 'miles' | 'km';
   isActive: boolean;
   emailVerified: boolean;
+  registrationSource?: string;
+}
+
+export function getOrCreateDeviceId(): string {
+  let deviceId = localStorage.getItem('portal_device_id');
+  if (!deviceId) {
+    deviceId =
+      typeof crypto !== 'undefined' && typeof crypto.randomUUID === 'function'
+        ? crypto.randomUUID()
+        : 'dev_' + Math.random().toString(36).substring(2, 15) + Math.random().toString(36).substring(2, 15);
+    localStorage.setItem('portal_device_id', deviceId);
+  }
+  return deviceId;
 }
 
 interface LoginResponse {
@@ -46,6 +59,14 @@ interface AuthState {
   theme: Theme;
   mfaPending: MfaPendingState | null;
   login: (email: string, password: string, recaptchaToken?: string) => Promise<void>;
+  initDeviceSession: () => Promise<void>;
+  claimAccount: (data: {
+    email: string;
+    password: string;
+    firstName?: string;
+    lastName?: string;
+    phone?: string;
+  }) => Promise<void>;
   register: (data: {
     firstName: string;
     lastName: string;
@@ -110,6 +131,38 @@ export const useAuth = create<AuthState>((set, get) => ({
     api.post('/v1/portal/access-logs', { action: 'login' }).catch(() => {});
   },
 
+  initDeviceSession: async () => {
+    const deviceId = getOrCreateDeviceId();
+    const data = await api.post<LoginResponse>('/v1/portal/auth/device-session', { deviceId });
+    localStorage.setItem('portal_language', data.driver.language);
+    localStorage.setItem('portal_timezone', data.driver.timezone);
+    localStorage.setItem('portal_theme', data.driver.themePreference);
+    localStorage.setItem('portal_distance_unit', data.driver.distanceUnit);
+    applyTheme(data.driver.themePreference);
+    await loadLanguage(data.driver.language);
+    set({
+      driver: data.driver,
+      theme: data.driver.themePreference,
+      isAuthenticated: true,
+      isHydrating: false,
+      mfaPending: null,
+    });
+  },
+
+  claimAccount: async (body) => {
+    const data = await api.post<{ driver: Driver }>('/v1/portal/auth/claim-account', body);
+    localStorage.setItem('portal_language', data.driver.language);
+    localStorage.setItem('portal_timezone', data.driver.timezone);
+    localStorage.setItem('portal_theme', data.driver.themePreference);
+    localStorage.setItem('portal_distance_unit', data.driver.distanceUnit);
+    applyTheme(data.driver.themePreference);
+    await loadLanguage(data.driver.language);
+    set({
+      driver: data.driver,
+      theme: data.driver.themePreference,
+    });
+  },
+
   register: async (body) => {
     const data = await api.post<LoginResponse>('/v1/portal/auth/register', body);
     localStorage.setItem('portal_language', data.driver.language);
@@ -152,7 +205,7 @@ export const useAuth = create<AuthState>((set, get) => ({
     } catch {
       // Clear state even if the server call fails
     }
-    // Prevent auto-login from firing after logout
+    // Prevent auto-login from firing after explicit logout
     sessionStorage.setItem('noAutoLogin', 'true');
     // Clear all portal localStorage keys
     localStorage.removeItem('evtivity-driver-location');
@@ -174,11 +227,30 @@ export const useAuth = create<AuthState>((set, get) => ({
         void loadLanguage(driver.language);
         set({ driver, isAuthenticated: true, isHydrating: false, theme: driver.themePreference });
       })
-      .catch((err: unknown) => {
+      .catch(async (err: unknown) => {
         if (err instanceof TypeError || (err instanceof ApiError && err.isServerDown)) {
           set({ apiDown: true, isHydrating: false });
           return;
         }
+
+        // When unauthenticated, automatically establish or resume device-bound session
+        const noAutoLogin = sessionStorage.getItem('noAutoLogin') === 'true';
+        const pathname = window.location.pathname;
+        const isExplicitAuthPage =
+          pathname === '/login' ||
+          pathname === '/register' ||
+          pathname === '/forgot-password' ||
+          pathname === '/reset-password';
+
+        if (!noAutoLogin && !isExplicitAuthPage) {
+          try {
+            await get().initDeviceSession();
+            return;
+          } catch {
+            // Fall back to unauthenticated state on network/server error
+          }
+        }
+
         set({ driver: null, isAuthenticated: false, isHydrating: false });
       });
   },

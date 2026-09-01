@@ -5,6 +5,7 @@ import { useState, useEffect, useRef } from 'react';
 import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { useQuery } from '@tanstack/react-query';
+import { Zap } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { PasswordInput } from '@/components/ui/password-input';
@@ -27,6 +28,7 @@ export function Login(): React.JSX.Element {
   const { t } = useTranslation();
   const navigate = useNavigate();
   const login = useAuth((s) => s.login);
+  const initDeviceSession = useAuth((s) => s.initDeviceSession);
   const mfaPending = useAuth((s) => s.mfaPending);
   const isAuthenticated = useAuth((s) => s.isAuthenticated);
   const [email, setEmail] = useState('');
@@ -181,6 +183,42 @@ export function Login(): React.JSX.Element {
               </Link>
             </div>
           </form>
+
+          <div className="relative my-4">
+            <div className="absolute inset-0 flex items-center">
+              <div className="w-full border-t border-border" />
+            </div>
+            <div className="relative flex justify-center text-xs uppercase">
+              <span className="bg-card px-2 text-muted-foreground">{t('common.or', 'or')}</span>
+            </div>
+          </div>
+
+          <Button
+            type="button"
+            variant="outline"
+            className="w-full gap-2 border-primary/40 text-primary hover:bg-primary/5"
+            size="lg"
+            disabled={loading}
+            onClick={() => {
+              void (async () => {
+                sessionStorage.removeItem('noAutoLogin');
+                setLoading(true);
+                setError(null);
+                try {
+                  await initDeviceSession();
+                  void navigate('/');
+                } catch {
+                  setError(t('auth.sessionExpired', 'Failed to initialize session. Please try again.'));
+                } finally {
+                  setLoading(false);
+                }
+              })();
+            }}
+          >
+            <Zap className="h-4 w-4" />
+            {t('auth.continueAsGuest', 'Continue as Guest (Instant Access)')}
+          </Button>
+
           <p className="mt-4 text-center text-sm text-muted-foreground">
             {t('auth.noAccount')}{' '}
             <Link to="/register" className="text-primary hover:underline">
