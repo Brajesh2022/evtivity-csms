@@ -49,13 +49,21 @@ export function ClaimAccountDialog({
     setLoading(true);
     setError(null);
     try {
-      await claimAccount({
+      const payload: {
+        email: string;
+        password: string;
+        firstName?: string;
+        lastName?: string;
+        phone?: string;
+      } = {
         email: email.trim(),
         password,
-        firstName: firstName.trim() || undefined,
-        lastName: lastName.trim() || undefined,
-        phone: phone.trim() || undefined,
-      });
+      };
+      if (firstName.trim()) payload.firstName = firstName.trim();
+      if (lastName.trim()) payload.lastName = lastName.trim();
+      if (phone.trim()) payload.phone = phone.trim();
+
+      await claimAccount(payload);
       onOpenChange(false);
     } catch (err: unknown) {
       if (err instanceof ApiError && err.status === 409) {
