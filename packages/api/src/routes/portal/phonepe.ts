@@ -151,7 +151,17 @@ export async function portalPhonePeRoutes(app: FastifyInstance): Promise<void> {
         paymentParams.mobileNumber = body.mobileNumber;
       }
 
-      const result = await createPhonePePaymentOrder(config, paymentParams);
+      let result;
+      try {
+        result = await createPhonePePaymentOrder(config, paymentParams);
+      } catch (err: unknown) {
+        const msg = err instanceof Error ? err.message : 'PhonePe payment initiation failed';
+        await reply.status(400).send({
+          error: msg,
+          code: 'PAYMENT_FAILED',
+        });
+        return;
+      }
 
       // Insert pending payment record
       await db.insert(paymentRecords).values({
