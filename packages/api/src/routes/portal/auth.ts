@@ -3,10 +3,10 @@
 
 import type { FastifyInstance } from 'fastify';
 import { z } from 'zod';
-import { eq, and, isNull, ilike } from 'drizzle-orm';
+import { eq, and, isNull, ilike, desc, sql } from 'drizzle-orm';
 import argon2 from 'argon2';
 import { db, client, isPortalRegistrationEnabled } from '@evtivity/database';
-import { drivers, userTokens } from '@evtivity/database';
+import { drivers, userTokens, refreshTokens, driverTokens } from '@evtivity/database';
 import {
   dispatchDriverNotification,
   dispatchSystemNotification,
@@ -118,6 +118,20 @@ const attestRegisterBody = z.object({
 const attestChallengeResponse = z
   .object({ challenge: z.string().describe('Single-use base64url nonce, valid 5 minutes') })
   .passthrough();
+
+const deviceSessionBody = z.object({
+  deviceId: z.string().min(8).max(64).describe('Unique device identifier from client'),
+});
+
+const claimAccountBody = z.object({
+  email: z.string().email().max(255),
+  password: z.string().min(12),
+  firstName: z.string().min(1).max(100).optional(),
+  lastName: z.string().min(1).max(100).optional(),
+  phone: z.string().max(50).optional(),
+});
+
+const portalClaimAccountResponse = z.object({ driver: portalDriverItem }).passthrough();
 
 const driverSelect = {
   id: drivers.id,
@@ -337,6 +351,167 @@ export function portalAuthRoutes(app: FastifyInstance): void {
         },
         ALL_TEMPLATES_DIRS,
       );
+    },
+  );
+
+  app.post(
+    '/portal/auth/device-session',
+    {
+      schema: {
+        tags: ['Portal Auth'],
+        summary: 'Establish or resume a device-bound driver session',
+        description:
+          'Finds the existing driver associated with this deviceId or creates a new guest driver profile, issuing driver access and refresh tokens/cookies without requiring login.',
+        operationId: 'portalDeviceSession',
+        security: [],
+        body: zodSchema(deviceSessionBody),
+        response: {
+          200: itemResponse(portalAuthRegisterResponse),
+          500: errorWith('Internal server error', [ERROR_CODES.INTERNAL_ERROR]),
+        },
+      },
+      config: {
+        rateLimit: {
+          max: apiConfig.AUTH_RATE_LIMIT_MAX,
+          timeWindow: apiConfig.AUTH_RATE_LIMIT_WINDOW,
+        },
+      },
+    },
+    async (request, reply) => {
+      const { deviceId } = request.body as z.infer<typeof deviceSessionBody>;
+
+      // Check if there is an active unrevoked refresh token associated with this deviceId
+      const [existingToken] = await db
+        .select({ driverId: refreshTokens.driverId })
+        .from(refreshTokens)
+        .where(
+          and(
+            eq(refreshTokens.deviceId, deviceId),
+            isNull(refreshTokens.revokedAt),
+          ),
+        )
+        .orderBy(desc(refreshTokens.createdAt))
+        .limit(1);
+
+      let driver: typeof driverSelect | null = null;
+      if (existingToken?.driverId != null) {
+        const [found] = await db
+          .select(driverSelect)
+          .from(drivers)
+          .where(and(eq(drivers.id, existingToken.driverId), eq(drivers.isActive, true)));
+        if (found != null) {
+          driver = found;
+        }
+      }
+
+      if (driver == null) {
+        const [newDriver] = await db
+          .insert(drivers)
+          .values({
+            firstName: 'Driver',
+            lastName: '',
+            registrationSource: 'device',
+            email: null,
+            passwordHash: null,
+            isActive: true,
+            emailVerified: true,
+            language: 'en',
+            timezone: 'America/New_York',
+            themePreference: 'light',
+            distanceUnit: 'miles',
+          })
+          .returning(driverSelect);
+
+        if (newDriver == null) {
+          await reply
+            .status(500)
+            .send({ error: 'Failed to create driver', code: 'DRIVER_CREATE_FAILED' });
+          return;
+        }
+
+        driver = newDriver;
+
+        // Auto-create virtual token for central OCPP authorization
+        await db
+          .insert(driverTokens)
+          .values({
+            driverId: driver.id,
+            idToken: `VIRT_${driver.id}`,
+            tokenType: 'virtual',
+            isActive: true,
+          })
+          .catch(() => {});
+      }
+
+      // Ensure device id is passed in header so issueDriverSession / createRefreshToken stores it
+      (request.headers as Record<string, string>)['x-device-id'] = deviceId;
+      await issueDriverSession(app, request, reply, driver, { status: 200 });
+    },
+  );
+
+  app.post(
+    '/portal/auth/claim-account',
+    {
+      onRequest: [app.authenticateDriver],
+      schema: {
+        tags: ['Portal Auth'],
+        summary: 'Upgrade an anonymous device driver into a registered account',
+        description:
+          'Sets email and password for a device-bound driver profile so they can log in across multiple devices.',
+        operationId: 'portalClaimAccount',
+        security: [{ bearerAuth: [] }],
+        body: zodSchema(claimAccountBody),
+        response: {
+          200: itemResponse(portalClaimAccountResponse),
+          400: errorWith('Weak password', [ERROR_CODES.WEAK_PASSWORD]),
+          404: errorWith('Driver not found', [ERROR_CODES.DRIVER_NOT_FOUND]),
+          409: errorWith('Email exists', [ERROR_CODES.EMAIL_EXISTS]),
+        },
+      },
+    },
+    async (request, reply) => {
+      const { driverId } = request.user as DriverJwtPayload;
+      const body = request.body as z.infer<typeof claimAccountBody>;
+
+      const complexityError = validatePasswordComplexity(body.password);
+      if (complexityError != null) {
+        await reply.status(400).send({ error: complexityError, code: 'WEAK_PASSWORD' });
+        return;
+      }
+
+      const [existing] = await db
+        .select({ id: drivers.id })
+        .from(drivers)
+        .where(and(ilike(drivers.email, body.email), sql`${drivers.id} != ${driverId}`));
+
+      if (existing != null) {
+        await reply.status(409).send({ error: 'Email already registered', code: 'EMAIL_EXISTS' });
+        return;
+      }
+
+      const passwordHash = await argon2.hash(body.password);
+
+      const [updated] = await db
+        .update(drivers)
+        .set({
+          email: body.email,
+          passwordHash,
+          ...(body.firstName != null && body.firstName.trim() !== '' ? { firstName: body.firstName.trim() } : {}),
+          ...(body.lastName != null ? { lastName: body.lastName.trim() } : {}),
+          ...(body.phone != null ? { phone: body.phone.trim() } : {}),
+          registrationSource: 'portal',
+          emailVerified: true,
+          updatedAt: new Date(),
+        })
+        .where(eq(drivers.id, driverId))
+        .returning(driverSelect);
+
+      if (updated == null) {
+        await reply.status(404).send({ error: 'Driver not found', code: 'DRIVER_NOT_FOUND' });
+        return;
+      }
+
+      return { driver: updated };
     },
   );
 
