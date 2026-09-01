@@ -393,7 +393,7 @@ export function portalAuthRoutes(app: FastifyInstance): void {
         .orderBy(desc(refreshTokens.createdAt))
         .limit(1);
 
-      let driver: typeof driverSelect | null = null;
+      let driver: z.infer<typeof portalDriverItem> | null = null;
       if (existingToken?.driverId != null) {
         const [found] = await db
           .select(driverSelect)
@@ -435,8 +435,8 @@ export function portalAuthRoutes(app: FastifyInstance): void {
         await db
           .insert(driverTokens)
           .values({
-            driverId: driver.id,
-            idToken: `VIRT_${driver.id}`,
+            driverId: newDriver.id,
+            idToken: `VIRT_${newDriver.id}`,
             tokenType: 'virtual',
             isActive: true,
           })
