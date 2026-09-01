@@ -803,10 +803,10 @@ export function ChargerDetail({ mode = 'charge' }: ChargerDetailProps = {}): Rea
       {showStartButton && (
         <div className="space-y-3">
           {error !== '' && <p className="text-sm text-destructive">{error}</p>}
-          {station.phonepeEnabled === true && selectedEvse != null && (
+          {station.phonepeEnabled === true && selectedEvseId != null && (
             <PhonePeCheckoutButton
               stationId={station.stationId}
-              evseId={selectedEvse.evseId}
+              evseId={selectedEvseId}
               amountPaisa={station.phonepePreAuthPaisa ?? 10000}
               onError={(err) => setError(err)}
             />
