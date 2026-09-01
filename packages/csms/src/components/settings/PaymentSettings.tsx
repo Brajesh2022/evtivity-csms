@@ -256,7 +256,7 @@ export function PaymentSettings({ settings }: PaymentSettingsProps): React.JSX.E
               <Checkbox
                 id="phonepe-enabled"
                 checked={phonepeEnabled}
-                onCheckedChange={(checked) => setPhonepeEnabled(Boolean(checked))}
+                onChange={(e) => setPhonepeEnabled(e.target.checked)}
               />
               <Label htmlFor="phonepe-enabled" className="cursor-pointer font-medium">
                 Enable PhonePe Gateway
@@ -333,14 +333,24 @@ export function PaymentSettings({ settings }: PaymentSettingsProps): React.JSX.E
                 isPending={phonepeSaveMutation.isPending}
                 type="button"
                 onClick={() => {
-                  phonepeSaveMutation.mutate({
+                  const vals: {
+                    merchantId?: string;
+                    saltKey?: string;
+                    saltIndex?: string | number;
+                    environment?: 'sandbox' | 'production';
+                    enabled?: boolean;
+                    defaultPreAuthAmountPaisa?: number;
+                  } = {
                     merchantId: phonepeMerchantId,
-                    saltKey: phonepeSaltKey !== '' ? phonepeSaltKey : undefined,
                     saltIndex: phonepeSaltIndex,
                     environment: phonepeEnvironment,
                     enabled: phonepeEnabled,
                     defaultPreAuthAmountPaisa: Number(phonepePreAuthPaisa),
-                  });
+                  };
+                  if (phonepeSaltKey !== '') {
+                    vals.saltKey = phonepeSaltKey;
+                  }
+                  phonepeSaveMutation.mutate(vals);
                 }}
               />
             </div>
