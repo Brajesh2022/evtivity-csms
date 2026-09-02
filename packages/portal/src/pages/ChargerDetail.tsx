@@ -433,7 +433,7 @@ export function ChargerDetail({ mode = 'charge' }: ChargerDetailProps = {}): Rea
   const showStartButton =
     mode === 'charge' &&
     selectedEvseId != null &&
-    (isFree || !station.paymentEnabled || selectedPm != null) &&
+    (isFree || !station.paymentEnabled || selectedPm != null || station.phonepeEnabled === true) &&
     !hasActiveSession;
   // Reserve mode shows the time pickers + Reserve button as soon as the
   // user lands on the page so they can pick a connector OR leave it null.
@@ -759,21 +759,19 @@ export function ChargerDetail({ mode = 'charge' }: ChargerDetailProps = {}): Rea
             <CardTitle className="text-base">{t('stationDetail.paymentMethod')}</CardTitle>
           </CardHeader>
           <CardContent className="p-4 pt-0 space-y-2">
-            {paymentMethods == null || paymentMethods.length === 0 ? (
-              <div>
-                <p className="text-sm text-muted-foreground mb-2">
-                  {t('stationDetail.addPaymentPrompt')}
-                </p>
-                <Button
-                  variant="outline"
-                  onClick={() => {
-                    void navigate('/payment-methods');
-                  }}
-                >
-                  {t('stationDetail.addPaymentMethod')}
-                </Button>
+            {station.phonepeEnabled === true && (
+              <div className="flex items-center justify-between p-3 rounded-md border border-[#5f259f]/30 bg-[#5f259f]/5">
+                <div className="flex items-center gap-2.5">
+                  <Zap className="h-4 w-4 text-[#5f259f]" />
+                  <div>
+                    <p className="text-sm font-medium">PhonePe / UPI Instant Pay</p>
+                    <p className="text-xs text-muted-foreground">Direct app-to-app UPI payment (no saved card needed)</p>
+                  </div>
+                </div>
+                <Badge variant="outline" className="border-[#5f259f] text-[#5f259f]">Available</Badge>
               </div>
-            ) : (
+            )}
+            {paymentMethods != null && paymentMethods.length > 0 ? (
               paymentMethods.map((pm) => (
                 <div
                   key={pm.id}
@@ -794,7 +792,21 @@ export function ChargerDetail({ mode = 'charge' }: ChargerDetailProps = {}): Rea
                   {pm.isDefault && <Badge variant="secondary">{t('common.default')}</Badge>}
                 </div>
               ))
-            )}
+            ) : !station.phonepeEnabled ? (
+              <div>
+                <p className="text-sm text-muted-foreground mb-2">
+                  {t('stationDetail.addPaymentPrompt')}
+                </p>
+                <Button
+                  variant="outline"
+                  onClick={() => {
+                    void navigate('/payment-methods');
+                  }}
+                >
+                  {t('stationDetail.addPaymentMethod')}
+                </Button>
+              </div>
+            ) : null}
           </CardContent>
         </Card>
       )}
@@ -811,20 +823,22 @@ export function ChargerDetail({ mode = 'charge' }: ChargerDetailProps = {}): Rea
               onError={(err) => setError(err)}
             />
           )}
-          <Button
-            className="w-full gap-2"
-            variant={station.phonepeEnabled === true ? 'outline' : 'default'}
-            size="lg"
-            disabled={isStarting || isCheckingStatus}
-            onClick={() => void handleStart()}
-          >
-            <Zap className="h-5 w-5" />
-            {isCheckingStatus
-              ? t('charger.checkingStatus')
-              : isStarting
-                ? t('stationDetail.starting')
-                : t('stationDetail.startCharging')}
-          </Button>
+          {(selectedPm != null || isFree || (!station.phonepeEnabled && !station.paymentEnabled)) && (
+            <Button
+              className="w-full gap-2"
+              variant={station.phonepeEnabled === true ? 'outline' : 'default'}
+              size="lg"
+              disabled={isStarting || isCheckingStatus}
+              onClick={() => void handleStart()}
+            >
+              <Zap className="h-5 w-5" />
+              {isCheckingStatus
+                ? t('charger.checkingStatus')
+                : isStarting
+                  ? t('stationDetail.starting')
+                  : t('stationDetail.startCharging')}
+            </Button>
+          )}
         </div>
       )}
 

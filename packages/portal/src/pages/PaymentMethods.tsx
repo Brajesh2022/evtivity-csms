@@ -6,7 +6,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useTranslation } from 'react-i18next';
 import { loadStripe } from '@stripe/stripe-js/pure';
 import { Elements, CardElement, useStripe, useElements } from '@stripe/react-stripe-js';
-import { CreditCard, Trash2, Star } from 'lucide-react';
+import { CreditCard, Trash2, Star, Zap } from 'lucide-react';
 import { PageHeader } from '@/components/PageHeader';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
@@ -196,7 +196,23 @@ export function PaymentMethods(): React.JSX.Element {
     <div className="space-y-4">
       <PageHeader title={t('payments.title')} />
 
-      {stripeError !== '' && <p className="text-sm text-destructive">{stripeError}</p>}
+      <div className="rounded-md border border-[#5f259f]/30 bg-[#5f259f]/5 p-3 text-sm">
+        <p className="font-medium text-[#5f259f] flex items-center gap-1.5">
+          <Zap className="h-4 w-4" /> PhonePe & UPI Instant Payments
+        </p>
+        <p className="text-xs text-muted-foreground mt-1">
+          UPI payments (PhonePe, GPay, Paytm) do not require saving a card here. You can pay instantly when starting a charge at any station.
+        </p>
+      </div>
+
+      {stripeError !== '' && (
+        <div className="rounded-md border border-destructive/30 bg-destructive/10 p-3 text-sm text-destructive">
+          <p className="font-medium">Card Processing Unavailable</p>
+          <p className="text-xs mt-1">
+            Credit/debit card saving requires Stripe configuration. You can still pay directly at chargers using PhonePe / UPI.
+          </p>
+        </div>
+      )}
 
       {/* Add entry point sits at the top, matching the mobile app. While the
           inline Stripe form is open it replaces the button to avoid two
