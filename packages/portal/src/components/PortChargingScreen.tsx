@@ -1,7 +1,7 @@
 // Copyright (c) 2024-2026 EVtivity. All rights reserved.
 // SPDX-License-Identifier: BUSL-1.1
 
-import { useState } from 'react';
+import { useState, useRef } from 'react';
 import { Link } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import {
@@ -74,14 +74,12 @@ export function PortChargingScreen({
 }: PortChargingScreenProps): React.JSX.Element {
   const { t } = useTranslation();
   const { companyName, companyLogo } = useAuthBranding();
+  const inputRef = useRef<HTMLInputElement>(null);
 
-  // Selected or typed amount in rupees
-  const defaultAmount =
-    station.phonepePreAuthPaisa != null
-      ? Math.max(10, Math.round(station.phonepePreAuthPaisa / 100))
-      : 100;
-  const [amount, setAmount] = useState<number>(defaultAmount);
-  const [amountStr, setAmountStr] = useState<string>(String(defaultAmount));
+  // Selected or typed amount in rupees (initial 0 with empty string for placeholder 0.0)
+  const [amount, setAmount] = useState<number>(0);
+  const [amountStr, setAmountStr] = useState<string>('');
+  const [isEditingAmount, setIsEditingAmount] = useState<boolean>(false);
 
   // Dropdown states
   const [isHoursOpen, setIsHoursOpen] = useState(false);
@@ -124,14 +122,22 @@ export function PortChargingScreen({
   function handlePresetClick(amt: number): void {
     setAmount(amt);
     setAmountStr(String(amt));
+    setIsEditingAmount(false);
     setPaymentError('');
+  }
+
+  function handleAmountClick(): void {
+    setIsEditingAmount(true);
+    setTimeout(() => {
+      inputRef.current?.focus();
+    }, 50);
   }
 
   function handleAmountInputChange(e: React.ChangeEvent<HTMLInputElement>): void {
     const val = e.target.value.replace(/[^0-9]/g, '');
     setAmountStr(val);
     const num = parseInt(val, 10);
-    if (!isNaN(num)) {
+    if (!isNaN(num) && num > 0) {
       setAmount(num);
       setPaymentError('');
     } else {
@@ -213,7 +219,7 @@ export function PortChargingScreen({
         </div>
 
         {/* Avatar & Brand Header */}
-        <div className="flex flex-col items-center text-center mb-5">
+        <div className="flex flex-col items-center text-center mb-4">
           {companyLogo ? (
             <img
               src={companyLogo}
@@ -291,55 +297,31 @@ export function PortChargingScreen({
 
           {/* Working Hours Dropdown Accordion */}
           {isHoursOpen && (
-            <div className="mt-3 pt-3 border-t border-border/60 text-xs text-muted-foreground space-y-1.5 animate-in fade-in duration-200">
-              <div className="flex items-center justify-between font-medium text-foreground">
-                <span className="flex items-center gap-1">
-                  <Clock className="h-3.5 w-3.5 text-emerald-600" /> Operating Schedule
-                </span>
-                <span className="text-emerald-600 dark:text-emerald-400 font-semibold">
-                  {station.hoursOfOperation || (station.isOnline ? '24 Hours Open (24/7)' : 'Offline')}
-                </span>
+            <div className="mt-3 pt-3 border-t border-border/60 text-xs text-muted-foreground space-y-2 animate-in fade-in duration-200">
+              <div className="flex items-start gap-2">
+                <Clock className="h-4 w-4 text-emerald-600 mt-0.5 shrink-0" />
+                <div className="space-y-1">
+                  <p className="font-semibold text-foreground">
+                    {station.hoursOfOperation ? station.hoursOfOperation : 'Mon, Tue, Wed, Thu, Fri, Sat, Sun 00:00–24:00'}
+                  </p>
+                  <p className="text-muted-foreground text-[11px]">
+                    {station.isOnline ? '• Station is operational and ready to charge' : '• Station is currently offline'}
+                  </p>
+                  <p className="text-muted-foreground text-[11px]">
+                    • Port {evse.evseId} ({connectorType}) delivering up to {powerKw} kW
+                  </p>
+                </div>
               </div>
-              {station.hoursOfOperation ? (
-                <p className="whitespace-pre-line">{station.hoursOfOperation}</p>
-              ) : (
-                <>
-                  <p>• {station.isOnline ? 'Station is operational and ready for charging' : 'Station is currently offline'}</p>
-                  <p>• Dynamic power delivery up to {powerKw} kW ({connectorType})</p>
-                </>
-              )}
             </div>
           )}
         </div>
 
-        {/* Amount Input Hero Area */}
-        <div className="flex flex-col items-center text-center my-3">
-          <label htmlFor="charge-amount-input" className="text-xs text-muted-foreground font-medium mb-1">
-            Enter amount
-          </label>
-
-          <div className="flex items-center justify-center relative">
-            <span className="text-4xl font-bold text-emerald-600 dark:text-emerald-400 mr-2 select-none">
-              ₹
-            </span>
-            <input
-              id="charge-amount-input"
-              type="text"
-              inputMode="numeric"
-              pattern="[0-9]*"
-              value={amountStr}
-              onChange={handleAmountInputChange}
-              className="text-5xl sm:text-6xl font-semibold tracking-tight text-foreground bg-transparent border-none outline-none text-center w-44 sm:w-56 focus:ring-0 p-0"
-              placeholder="100"
-            />
-          </div>
-          <div className="h-0.5 w-44 sm:w-56 bg-emerald-600 dark:bg-emerald-400 mt-1 rounded-full opacity-80" />
-
-          {/* Rate Pill Dropdown Button */}
+        {/* Rate Pill Dropdown Button (POSITIONED ABOVE THE AMOUNT) */}
+        <div className="flex flex-col items-center text-center mt-2 mb-3">
           <button
             type="button"
             onClick={() => setIsRateExpanded((prev) => !prev)}
-            className="mt-3 inline-flex items-center gap-1 px-3.5 py-1 rounded-full bg-emerald-50 text-emerald-800 dark:bg-emerald-950/70 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800/60 text-xs font-medium hover:bg-emerald-100 dark:hover:bg-emerald-900/60 transition-all cursor-pointer"
+            className="inline-flex items-center gap-1 px-3.5 py-1 rounded-full bg-emerald-50 text-emerald-800 dark:bg-emerald-950/70 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800/60 text-xs font-medium hover:bg-emerald-100 dark:hover:bg-emerald-900/60 transition-all cursor-pointer shadow-2xs"
           >
             <span>Rate: ₹{ratePerKwh.toFixed(2)} / kWh</span>
             {isRateExpanded ? (
@@ -351,7 +333,7 @@ export function PortChargingScreen({
 
           {/* Inline Rate Breakdown Accordion */}
           {isRateExpanded && (
-            <div className="w-full max-w-sm mt-3 p-3 rounded-xl bg-card border border-border/80 text-xs text-left space-y-1.5 shadow-2xs animate-in fade-in duration-200">
+            <div className="w-full max-w-sm mt-2.5 p-3 rounded-xl bg-card border border-border/80 text-xs text-left space-y-1.5 shadow-2xs animate-in fade-in duration-200">
               <div className="flex justify-between">
                 <span className="text-muted-foreground">Energy Consumption:</span>
                 <span className="font-semibold text-foreground">₹{ratePerKwh.toFixed(2)} / kWh</span>
@@ -379,17 +361,50 @@ export function PortChargingScreen({
           )}
         </div>
 
-        {/* Suggested Amounts Divider & Chips */}
-        <div className="w-full max-w-sm mx-auto my-3">
-          <div className="relative flex py-2 items-center">
-            <div className="flex-grow border-t border-border/70" />
-            <span className="flex-shrink mx-3 text-xs text-muted-foreground font-normal">
-              Suggested amounts
+        {/* Hero Amount Area (₹ 0.0 with 0.0 in gray, clickable to edit) */}
+        <div className="flex flex-col items-center text-center my-3">
+          <div
+            onClick={handleAmountClick}
+            className="flex items-center justify-center cursor-pointer select-none py-1 px-3 rounded-xl hover:bg-muted/30 transition-colors"
+          >
+            <span className="text-4xl sm:text-5xl font-bold text-emerald-600 dark:text-emerald-400 mr-2">
+              ₹
             </span>
-            <div className="flex-grow border-t border-border/70" />
-          </div>
 
-          <div className="grid grid-cols-4 gap-2 mt-1">
+            {isEditingAmount ? (
+              <input
+                ref={inputRef}
+                type="text"
+                inputMode="numeric"
+                pattern="[0-9]*"
+                value={amountStr}
+                onChange={handleAmountInputChange}
+                onBlur={() => {
+                  if (!amountStr || parseInt(amountStr, 10) === 0) {
+                    setIsEditingAmount(false);
+                    setAmountStr('');
+                    setAmount(0);
+                  }
+                }}
+                className="text-5xl sm:text-6xl font-semibold tracking-tight text-foreground bg-transparent border-b-2 border-emerald-600 outline-none text-center w-40 sm:w-52 focus:ring-0 p-0"
+                placeholder="0"
+                autoFocus
+              />
+            ) : amount > 0 ? (
+              <span className="text-5xl sm:text-6xl font-semibold tracking-tight text-foreground">
+                {amount}
+              </span>
+            ) : (
+              <span className="text-5xl sm:text-6xl font-semibold tracking-tight text-muted-foreground/40">
+                0.0
+              </span>
+            )}
+          </div>
+        </div>
+
+        {/* Suggestion Pills (DIRECTLY BELOW AMOUNT, NO HEADING) */}
+        <div className="w-full max-w-sm mx-auto mt-2 mb-4">
+          <div className="grid grid-cols-4 gap-2">
             {PRESET_AMOUNTS.map((amt) => {
               const isSelected = amount === amt;
               return (
@@ -412,7 +427,7 @@ export function PortChargingScreen({
         </div>
 
         {/* Information Notice Banner */}
-        <div className="w-full max-w-sm mx-auto rounded-xl bg-[#ecfdf5] dark:bg-emerald-950/40 border border-[#a7f3d0] dark:border-emerald-900/60 p-3.5 flex items-start gap-3 mt-3 mb-2 shadow-2xs">
+        <div className="w-full max-w-sm mx-auto rounded-xl bg-[#ecfdf5] dark:bg-emerald-950/40 border border-[#a7f3d0] dark:border-emerald-900/60 p-3.5 flex items-start gap-3 mt-auto mb-2 shadow-2xs">
           <Info className="h-5 w-5 text-emerald-700 dark:text-emerald-400 shrink-0 mt-0.5" />
           <p className="text-xs text-emerald-950 dark:text-emerald-200 leading-relaxed font-normal">
             You will be charged based on the energy (kWh) delivered until you stop the charging session.
@@ -429,6 +444,11 @@ export function PortChargingScreen({
               if (isFree) {
                 void handleProceedPayment();
               } else {
+                if (amount <= 0) {
+                  setPaymentError('Please select or enter an amount (e.g. ₹100)');
+                  handleAmountClick();
+                  return;
+                }
                 setIsBottomSheetOpen(true);
               }
             }}
