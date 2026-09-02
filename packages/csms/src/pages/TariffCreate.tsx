@@ -40,7 +40,7 @@ export function TariffCreate(): React.JSX.Element {
   const { t } = useTranslation();
 
   const [name, setName] = useState('');
-  const [currency, setCurrency] = useState('USD');
+  const [currency, setCurrency] = useState('INR');
   const [pricePerKwh, setPricePerKwh] = useState('');
   const [pricePerMinute, setPricePerMinute] = useState('');
   const [pricePerSession, setPricePerSession] = useState('');
@@ -209,72 +209,82 @@ export function TariffCreate(): React.JSX.Element {
               )}
             </div>
             <div className="space-y-2">
-              <Label htmlFor="tariff-kwh">{t('pricing.pricePerKwh')}</Label>
+              <Label htmlFor="tariff-kwh">
+                {t('pricing.pricePerKwh')} ({currency === 'INR' ? '₹' : currency})
+              </Label>
               <Input
                 id="tariff-kwh"
                 value={pricePerKwh}
                 onChange={(e) => {
                   setPricePerKwh(e.target.value);
                 }}
-                placeholder="0.25"
+                placeholder="18.00"
               />
             </div>
             <div className="space-y-2">
-              <Label htmlFor="tariff-min">{t('pricing.pricePerMinute')}</Label>
+              <Label htmlFor="tariff-min">
+                {t('pricing.pricePerMinute')} ({currency === 'INR' ? '₹' : currency})
+              </Label>
               <Input
                 id="tariff-min"
                 value={pricePerMinute}
                 onChange={(e) => {
                   setPricePerMinute(e.target.value);
                 }}
-                placeholder="0.05"
+                placeholder="0.00"
               />
             </div>
             <div className="space-y-2">
-              <Label htmlFor="tariff-session">{t('pricing.pricePerSession')}</Label>
+              <Label htmlFor="tariff-session">
+                {t('pricing.pricePerSession')} ({currency === 'INR' ? '₹' : currency})
+              </Label>
               <Input
                 id="tariff-session"
                 value={pricePerSession}
                 onChange={(e) => {
                   setPricePerSession(e.target.value);
                 }}
-                placeholder="1.00"
+                placeholder="0.00"
               />
             </div>
             <div className="space-y-2">
-              <Label htmlFor="tariff-idle-fee">{t('pricing.idleFeePricePerMinute')}</Label>
+              <Label htmlFor="tariff-idle-fee">
+                {t('pricing.idleFeePricePerMinute')} ({currency === 'INR' ? '₹' : currency})
+              </Label>
               <Input
                 id="tariff-idle-fee"
                 value={idleFeePricePerMinute}
                 onChange={(e) => {
                   setIdleFeePricePerMinute(e.target.value);
                 }}
-                placeholder="0.10"
+                placeholder="2.00"
               />
             </div>
             <div className="space-y-2">
-              <Label htmlFor="tariff-reservation-fee">{t('pricing.reservationFeePerMinute')}</Label>
+              <Label htmlFor="tariff-reservation-fee">
+                {t('pricing.reservationFeePerMinute')} ({currency === 'INR' ? '₹' : currency})
+              </Label>
               <Input
                 id="tariff-reservation-fee"
                 value={reservationFeePerMinute}
                 onChange={(e) => {
                   setReservationFeePerMinute(e.target.value);
                 }}
-                placeholder="0.05"
+                placeholder="0.00"
               />
               <p className="text-xs text-muted-foreground">{t('pricing.reservationFeeHelper')}</p>
             </div>
             <div className="space-y-2">
-              <Label htmlFor="tariff-tax-rate">{t('pricing.taxRate')}</Label>
+              <Label htmlFor="tariff-tax-rate">{t('pricing.taxRate')} (GST)</Label>
               <Input
                 id="tariff-tax-rate"
                 value={taxRate}
                 onChange={(e) => {
                   setTaxRate(e.target.value);
                 }}
-                placeholder="0.08"
+                placeholder="0.18"
               />
-              <p className="text-xs text-muted-foreground">{t('pricing.taxRateHelper')}</p>
+              <p className="text-xs text-muted-foreground">e.g. 0.18 for 18% GST (or 0.05 for 5%)</p>
             </div>
 
             <div className="col-span-full border-t pt-4 space-y-4">

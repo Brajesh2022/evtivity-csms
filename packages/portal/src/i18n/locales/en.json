@@ -254,7 +254,7 @@
     "unitMin": "min",
     "sessionFee": "session fee",
     "idleFee": "/min idle fee",
-    "tax": "tax",
+    "tax": "GST",
     "startCharging": "Start Charging",
     "freeCharging": "Free charging",
     "siteContact": "Site Contact",

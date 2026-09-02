@@ -58,7 +58,7 @@ export function CompanySettings({
       return typeof v === 'string' || typeof v === 'number' ? String(v) : '';
     };
     setCompanyName(s('company.name') || 'EVtivity');
-    setCompanyCurrency(s('company.currency') || 'USD');
+    setCompanyCurrency(s('company.currency') || 'INR');
     setCompanyContactEmail(s('company.contactEmail'));
     setCompanySupportEmail(s('company.supportEmail'));
     setCompanySupportPhone(s('company.supportPhone'));
@@ -560,28 +560,18 @@ export function CompanySettings({
                 }}
                 className="h-9"
               >
-                <option value="USD">USD - US Dollar</option>
-                <option value="EUR">EUR - Euro</option>
-                <option value="GBP">GBP - British Pound</option>
-                <option value="CAD">CAD - Canadian Dollar</option>
-                <option value="AUD">AUD - Australian Dollar</option>
-                <option value="CHF">CHF - Swiss Franc</option>
-                <option value="JPY">JPY - Japanese Yen</option>
-                <option value="CNY">CNY - Chinese Yuan</option>
-                <option value="KRW">KRW - South Korean Won</option>
-                <option value="INR">INR - Indian Rupee</option>
-                <option value="BRL">BRL - Brazilian Real</option>
-                <option value="MXN">MXN - Mexican Peso</option>
-                <option value="SEK">SEK - Swedish Krona</option>
-                <option value="NOK">NOK - Norwegian Krone</option>
-                <option value="DKK">DKK - Danish Krone</option>
-                <option value="NZD">NZD - New Zealand Dollar</option>
-                <option value="SGD">SGD - Singapore Dollar</option>
-                <option value="HKD">HKD - Hong Kong Dollar</option>
-                <option value="ZAR">ZAR - South African Rand</option>
-                <option value="ILS">ILS - Israeli Shekel</option>
-                <option value="AED">AED - UAE Dirham</option>
-                <option value="SAR">SAR - Saudi Riyal</option>
+                <option value="INR">INR - Indian Rupee (₹)</option>
+                <option value="USD">USD - US Dollar ($)</option>
+                <option value="EUR">EUR - Euro (€)</option>
+                <option value="GBP">GBP - British Pound (£)</option>
+                <option value="CAD">CAD - Canadian Dollar (CA$)</option>
+                <option value="AUD">AUD - Australian Dollar (A$)</option>
+                <option value="CHF">CHF - Swiss Franc (CHF)</option>
+                <option value="JPY">JPY - Japanese Yen (¥)</option>
+                <option value="CNY">CNY - Chinese Yuan (¥)</option>
+                <option value="KRW">KRW - South Korean Won (₩)</option>
+                <option value="AED">AED - UAE Dirham (AED)</option>
+                <option value="SAR">SAR - Saudi Riyal (SAR)</option>
                 <option value="TWD">TWD - Taiwan Dollar</option>
                 <option value="THB">THB - Thai Baht</option>
                 <option value="PLN">PLN - Polish Zloty</option>

@@ -9,6 +9,7 @@ export function cn(...inputs: ClassValue[]): string {
 }
 
 const DEFAULT_CURRENCY_SYMBOLS: Record<string, string> = {
+  INR: '₹',
   USD: '$',
   EUR: '\u20AC',
   GBP: '\u00A3',
@@ -33,9 +34,10 @@ export function currencySymbol(currency: string): string {
   return all[currency] ?? `${currency} `;
 }
 
-export function formatCents(cents: number | null | undefined, currency = 'USD'): string {
+export function formatCents(cents: number | null | undefined, currency = 'INR'): string {
   if (cents == null) return 'n/a';
-  return new Intl.NumberFormat('en-US', {
+  const locale = currency === 'INR' ? 'en-IN' : 'en-US';
+  return new Intl.NumberFormat(locale, {
     style: 'currency',
     currency,
   }).format(cents / 100);

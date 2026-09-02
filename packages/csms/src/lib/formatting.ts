@@ -10,9 +10,10 @@
  * Format cents to a localized currency string using Intl.NumberFormat.
  * Returns 'n/a' for null/undefined values.
  */
-export function formatCents(cents: number | null | undefined, currency = 'USD'): string {
+export function formatCents(cents: number | null | undefined, currency = 'INR'): string {
   if (cents == null) return 'n/a';
-  return new Intl.NumberFormat('en-US', {
+  const locale = currency === 'INR' ? 'en-IN' : 'en-US';
+  return new Intl.NumberFormat(locale, {
     style: 'currency',
     currency,
   }).format(cents / 100);

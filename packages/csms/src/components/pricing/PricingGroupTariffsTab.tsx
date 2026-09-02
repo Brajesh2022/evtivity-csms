@@ -126,31 +126,58 @@ export function PricingGroupTariffsTab({
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {tariffs.map((tariff) => (
-                  <TableRow
-                    key={tariff.id}
-                    className="cursor-pointer"
-                    data-testid={`tariff-row-${tariff.id}`}
-                    onClick={() => {
-                      void navigate(`/pricing/${groupId}/tariffs/${tariff.id}`);
-                    }}
-                  >
-                    <TableCell className="text-muted-foreground">{tariff.id}</TableCell>
-                    <TableCell className="font-medium text-primary" data-testid="row-click-target">
-                      {tariff.name}
-                    </TableCell>
-                    <TableCell className="text-sm text-muted-foreground">
-                      {formatRestrictionSummary(tariff.restrictions)}
-                    </TableCell>
-                    <TableCell>{tariff.pricePerKwh ?? 'n/a'}</TableCell>
-                    <TableCell>{tariff.pricePerMinute ?? 'n/a'}</TableCell>
-                    <TableCell>{tariff.pricePerSession ?? 'n/a'}</TableCell>
-                    <TableCell>{tariff.idleFeePricePerMinute ?? 'n/a'}</TableCell>
-                    <TableCell>{tariff.reservationFeePerMinute ?? 'n/a'}</TableCell>
-                    <TableCell>{tariff.taxRate ?? 'n/a'}</TableCell>
-                    <TableCell>{tariff.currency}</TableCell>
-                  </TableRow>
-                ))}
+                {tariffs.map((tariff) => {
+                  const sym = tariff.currency === 'INR' ? '₹' : `${tariff.currency} `;
+                  return (
+                    <TableRow
+                      key={tariff.id}
+                      className="cursor-pointer"
+                      data-testid={`tariff-row-${tariff.id}`}
+                      onClick={() => {
+                        void navigate(`/pricing/${groupId}/tariffs/${tariff.id}`);
+                      }}
+                    >
+                      <TableCell className="text-muted-foreground">{tariff.id}</TableCell>
+                      <TableCell className="font-medium text-primary" data-testid="row-click-target">
+                        {tariff.name}
+                      </TableCell>
+                      <TableCell className="text-sm text-muted-foreground">
+                        {formatRestrictionSummary(tariff.restrictions)}
+                      </TableCell>
+                      <TableCell>
+                        {tariff.pricePerKwh != null
+                          ? `${sym}${Number(tariff.pricePerKwh).toFixed(2)}`
+                          : 'n/a'}
+                      </TableCell>
+                      <TableCell>
+                        {tariff.pricePerMinute != null
+                          ? `${sym}${Number(tariff.pricePerMinute).toFixed(2)}`
+                          : 'n/a'}
+                      </TableCell>
+                      <TableCell>
+                        {tariff.pricePerSession != null
+                          ? `${sym}${Number(tariff.pricePerSession).toFixed(2)}`
+                          : 'n/a'}
+                      </TableCell>
+                      <TableCell>
+                        {tariff.idleFeePricePerMinute != null
+                          ? `${sym}${Number(tariff.idleFeePricePerMinute).toFixed(2)}`
+                          : 'n/a'}
+                      </TableCell>
+                      <TableCell>
+                        {tariff.reservationFeePerMinute != null
+                          ? `${sym}${Number(tariff.reservationFeePerMinute).toFixed(2)}`
+                          : 'n/a'}
+                      </TableCell>
+                      <TableCell>
+                        {tariff.taxRate != null
+                          ? `${(Number(tariff.taxRate) * 100).toFixed(0)}%`
+                          : 'n/a'}
+                      </TableCell>
+                      <TableCell className="font-medium">{tariff.currency}</TableCell>
+                    </TableRow>
+                  );
+                })}
               </TableBody>
             </Table>
           </div>

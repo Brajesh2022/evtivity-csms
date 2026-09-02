@@ -342,72 +342,82 @@ export function TariffDetail(): React.JSX.Element {
                 </Select>
               </div>
               <div className="space-y-2">
-                <Label htmlFor="edit-kwh">{t('pricing.pricePerKwh')}</Label>
+                <Label htmlFor="edit-kwh">
+                  {t('pricing.pricePerKwh')} ({tariff.currency === 'INR' ? '₹' : tariff.currency})
+                </Label>
                 <Input
                   id="edit-kwh"
                   value={pricePerKwh}
                   onChange={(e) => {
                     setPricePerKwh(e.target.value);
                   }}
-                  placeholder="0.25"
+                  placeholder="18.00"
                 />
               </div>
               <div className="space-y-2">
-                <Label htmlFor="edit-min">{t('pricing.pricePerMinute')}</Label>
+                <Label htmlFor="edit-min">
+                  {t('pricing.pricePerMinute')} ({tariff.currency === 'INR' ? '₹' : tariff.currency})
+                </Label>
                 <Input
                   id="edit-min"
                   value={pricePerMinute}
                   onChange={(e) => {
                     setPricePerMinute(e.target.value);
                   }}
-                  placeholder="0.05"
+                  placeholder="0.00"
                 />
               </div>
               <div className="space-y-2">
-                <Label htmlFor="edit-session">{t('pricing.pricePerSession')}</Label>
+                <Label htmlFor="edit-session">
+                  {t('pricing.pricePerSession')} ({tariff.currency === 'INR' ? '₹' : tariff.currency})
+                </Label>
                 <Input
                   id="edit-session"
                   value={pricePerSession}
                   onChange={(e) => {
                     setPricePerSession(e.target.value);
                   }}
-                  placeholder="1.00"
+                  placeholder="0.00"
                 />
               </div>
               <div className="space-y-2">
-                <Label htmlFor="edit-idle-fee">{t('pricing.idleFeePricePerMinute')}</Label>
+                <Label htmlFor="edit-idle-fee">
+                  {t('pricing.idleFeePricePerMinute')} ({tariff.currency === 'INR' ? '₹' : tariff.currency})
+                </Label>
                 <Input
                   id="edit-idle-fee"
                   value={idleFeePricePerMinute}
                   onChange={(e) => {
                     setIdleFeePricePerMinute(e.target.value);
                   }}
-                  placeholder="0.10"
+                  placeholder="2.00"
                 />
               </div>
               <div className="space-y-2">
-                <Label htmlFor="edit-reservation-fee">{t('pricing.reservationFeePerMinute')}</Label>
+                <Label htmlFor="edit-reservation-fee">
+                  {t('pricing.reservationFeePerMinute')} ({tariff.currency === 'INR' ? '₹' : tariff.currency})
+                </Label>
                 <Input
                   id="edit-reservation-fee"
                   value={reservationFeePerMinute}
                   onChange={(e) => {
                     setReservationFeePerMinute(e.target.value);
                   }}
-                  placeholder="0.05"
+                  placeholder="0.00"
                 />
                 <p className="text-xs text-muted-foreground">{t('pricing.reservationFeeHelper')}</p>
               </div>
               <div className="space-y-2">
-                <Label htmlFor="edit-tax-rate">{t('pricing.taxRate')}</Label>
+                <Label htmlFor="edit-tax-rate">{t('pricing.taxRate')} (GST)</Label>
                 <Input
                   id="edit-tax-rate"
                   value={taxRate}
                   onChange={(e) => {
                     setTaxRate(e.target.value);
                   }}
-                  placeholder="0.08"
+                  placeholder="0.18"
                 />
-                <p className="text-xs text-muted-foreground">{t('pricing.taxRateHelper')}</p>
+                <p className="text-xs text-muted-foreground">e.g. 0.18 for 18% GST (or 0.05 for 5%)</p>
               </div>
 
               <div className="col-span-full border-t pt-4 space-y-4">
@@ -579,27 +589,51 @@ export function TariffDetail(): React.JSX.Element {
               </div>
               <div>
                 <dt className="text-muted-foreground">{t('pricing.pricePerKwh')}</dt>
-                <dd className="font-medium">{tariff.pricePerKwh ?? 'n/a'}</dd>
+                <dd className="font-medium">
+                  {tariff.pricePerKwh != null
+                    ? `${tariff.currency === 'INR' ? '₹' : `${tariff.currency} `}${Number(tariff.pricePerKwh).toFixed(2)}`
+                    : 'n/a'}
+                </dd>
               </div>
               <div>
                 <dt className="text-muted-foreground">{t('pricing.pricePerMinute')}</dt>
-                <dd className="font-medium">{tariff.pricePerMinute ?? 'n/a'}</dd>
+                <dd className="font-medium">
+                  {tariff.pricePerMinute != null
+                    ? `${tariff.currency === 'INR' ? '₹' : `${tariff.currency} `}${Number(tariff.pricePerMinute).toFixed(2)}`
+                    : 'n/a'}
+                </dd>
               </div>
               <div>
                 <dt className="text-muted-foreground">{t('pricing.pricePerSession')}</dt>
-                <dd className="font-medium">{tariff.pricePerSession ?? 'n/a'}</dd>
+                <dd className="font-medium">
+                  {tariff.pricePerSession != null
+                    ? `${tariff.currency === 'INR' ? '₹' : `${tariff.currency} `}${Number(tariff.pricePerSession).toFixed(2)}`
+                    : 'n/a'}
+                </dd>
               </div>
               <div>
                 <dt className="text-muted-foreground">{t('pricing.idleFeePricePerMinute')}</dt>
-                <dd className="font-medium">{tariff.idleFeePricePerMinute ?? 'n/a'}</dd>
+                <dd className="font-medium">
+                  {tariff.idleFeePricePerMinute != null
+                    ? `${tariff.currency === 'INR' ? '₹' : `${tariff.currency} `}${Number(tariff.idleFeePricePerMinute).toFixed(2)}`
+                    : 'n/a'}
+                </dd>
               </div>
               <div>
                 <dt className="text-muted-foreground">{t('pricing.reservationFeePerMinute')}</dt>
-                <dd className="font-medium">{tariff.reservationFeePerMinute ?? 'n/a'}</dd>
+                <dd className="font-medium">
+                  {tariff.reservationFeePerMinute != null
+                    ? `${tariff.currency === 'INR' ? '₹' : `${tariff.currency} `}${Number(tariff.reservationFeePerMinute).toFixed(2)}`
+                    : 'n/a'}
+                </dd>
               </div>
               <div>
                 <dt className="text-muted-foreground">{t('pricing.taxRate')}</dt>
-                <dd className="font-medium">{tariff.taxRate ?? 'n/a'}</dd>
+                <dd className="font-medium">
+                  {tariff.taxRate != null
+                    ? `${(Number(tariff.taxRate) * 100).toFixed(0)}% (GST)`
+                    : 'n/a'}
+                </dd>
               </div>
               <div>
                 <dt className="text-muted-foreground">{t('common.created')}</dt>

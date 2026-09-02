@@ -36,6 +36,7 @@ export function formatPricingDisplay(
 }
 
 const DEFAULT_CURRENCY_SYMBOLS: Record<string, string> = {
+  INR: '₹',
   USD: '$',
   EUR: '\u20AC',
   GBP: '\u00A3',
