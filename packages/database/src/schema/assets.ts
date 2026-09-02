@@ -55,7 +55,7 @@ export const sites = pgTable(
     country: varchar('country', { length: 100 }),
     latitude: varchar('latitude', { length: 20 }),
     longitude: varchar('longitude', { length: 20 }),
-    timezone: varchar('timezone', { length: 100 }).notNull().default('America/New_York'),
+    timezone: varchar('timezone', { length: 100 }).notNull().default('Asia/Kolkata'),
     contactName: varchar('contact_name', { length: 255 }),
     contactEmail: varchar('contact_email', { length: 255 }),
     contactPhone: varchar('contact_phone', { length: 50 }),

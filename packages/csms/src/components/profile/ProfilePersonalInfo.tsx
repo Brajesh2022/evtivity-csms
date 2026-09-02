@@ -35,7 +35,7 @@ export function ProfilePersonalInfo({ user }: ProfilePersonalInfoProps): React.J
   const [lastName, setLastName] = useState('');
   const [phone, setPhone] = useState('');
   const [editLanguage, setEditLanguage] = useState('en');
-  const [editTimezone, setEditTimezone] = useState('America/New_York');
+  const [editTimezone, setEditTimezone] = useState('Asia/Kolkata');
 
   const updateMutation = useMutation({
     mutationFn: (body: {

@@ -27,7 +27,7 @@ async function getTimezone(): Promise<string> {
     .select({ value: settings.value })
     .from(settings)
     .where(eq(settings.key, 'system.timezone'));
-  return typeof row?.value === 'string' ? row.value : 'America/New_York';
+  return typeof row?.value === 'string' ? row.value : 'Asia/Kolkata';
 }
 
 function getDateRange(filters: Filters): { since: Date; until: Date; totalHours: number } {

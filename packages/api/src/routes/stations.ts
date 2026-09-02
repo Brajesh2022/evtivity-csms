@@ -2402,7 +2402,7 @@ export function stationRoutes(app: FastifyInstance): void {
         .from(chargingStations)
         .leftJoin(sites, eq(chargingStations.siteId, sites.id))
         .where(eq(chargingStations.id, id));
-      const tz = stationRow?.siteTimezone ?? 'America/New_York';
+      const tz = stationRow?.siteTimezone ?? 'Asia/Kolkata';
 
       const rows = await db
         .select({
@@ -2457,7 +2457,7 @@ export function stationRoutes(app: FastifyInstance): void {
         .from(chargingStations)
         .leftJoin(sites, eq(chargingStations.siteId, sites.id))
         .where(eq(chargingStations.id, id));
-      const tz = stationRow?.siteTimezone ?? 'America/New_York';
+      const tz = stationRow?.siteTimezone ?? 'Asia/Kolkata';
 
       const rows = await db
         .select({
@@ -2541,7 +2541,7 @@ export function stationRoutes(app: FastifyInstance): void {
         .from(chargingStations)
         .leftJoin(sites, eq(chargingStations.siteId, sites.id))
         .where(eq(chargingStations.id, id));
-      const tz = stationRow?.siteTimezone ?? 'America/New_York';
+      const tz = stationRow?.siteTimezone ?? 'Asia/Kolkata';
       const sinceIso = since.toISOString();
 
       const rows = await db.execute(sql`
@@ -2674,7 +2674,7 @@ export function stationRoutes(app: FastifyInstance): void {
         .from(chargingStations)
         .leftJoin(sites, eq(chargingStations.siteId, sites.id))
         .where(eq(chargingStations.id, id));
-      const tz = stationRow?.siteTimezone ?? 'America/New_York';
+      const tz = stationRow?.siteTimezone ?? 'Asia/Kolkata';
 
       const rows = await db
         .select({

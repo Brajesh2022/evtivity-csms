@@ -42,7 +42,7 @@ export const drivers = pgTable(
     passwordHash: varchar('password_hash', { length: 255 }),
     registrationSource: varchar('registration_source', { length: 20 }).notNull().default('admin'),
     language: varchar('language', { length: 10 }).notNull().default('en'),
-    timezone: varchar('timezone', { length: 50 }).notNull().default('America/New_York'),
+    timezone: varchar('timezone', { length: 50 }).notNull().default('Asia/Kolkata'),
     themePreference: varchar('theme_preference', { length: 10 }).notNull().default('light'),
     distanceUnit: varchar('distance_unit', { length: 10 }).notNull().default('miles'),
     mfaEnabled: boolean('mfa_enabled').notNull().default(false),

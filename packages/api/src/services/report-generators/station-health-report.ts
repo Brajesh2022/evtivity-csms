@@ -179,7 +179,7 @@ async function queryDowntimeIncidents(filters: Filters): Promise<DowntimeInciden
     .select({ value: settings.value })
     .from(settings)
     .where(eq(settings.key, 'system.timezone'));
-  const tz = typeof tzRow?.value === 'string' ? tzRow.value : 'America/New_York';
+  const tz = typeof tzRow?.value === 'string' ? tzRow.value : 'Asia/Kolkata';
 
   const rows = await db.execute(sql`
     SELECT

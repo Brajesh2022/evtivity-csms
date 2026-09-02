@@ -5,7 +5,7 @@ import { eq } from 'drizzle-orm';
 import { db } from '../config.js';
 import { settings } from '../schema/settings.js';
 
-const DEFAULT_TIMEZONE = 'America/New_York';
+const DEFAULT_TIMEZONE = 'Asia/Kolkata';
 const TTL_MS = 60_000;
 
 let cachedTimezone: string | undefined;

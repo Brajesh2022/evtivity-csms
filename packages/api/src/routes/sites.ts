@@ -1290,7 +1290,7 @@ export function siteRoutes(app: FastifyInstance): void {
         .select({ timezone: sites.timezone })
         .from(sites)
         .where(eq(sites.id, id));
-      const tz = siteRow?.timezone ?? 'America/New_York';
+      const tz = siteRow?.timezone ?? 'Asia/Kolkata';
 
       const rows = await db
         .select({
@@ -1346,7 +1346,7 @@ export function siteRoutes(app: FastifyInstance): void {
         .select({ timezone: sites.timezone })
         .from(sites)
         .where(eq(sites.id, id));
-      const tz = siteRow?.timezone ?? 'America/New_York';
+      const tz = siteRow?.timezone ?? 'Asia/Kolkata';
 
       const rows = await db
         .select({
@@ -1432,7 +1432,7 @@ export function siteRoutes(app: FastifyInstance): void {
         .select({ timezone: sites.timezone })
         .from(sites)
         .where(eq(sites.id, id));
-      const tz = siteRow?.timezone ?? 'America/New_York';
+      const tz = siteRow?.timezone ?? 'Asia/Kolkata';
 
       const rows = await db
         .select({

@@ -4,6 +4,9 @@
 import { useAuth } from './auth';
 
 export const TIMEZONE_OPTIONS = [
+  // India (Primary Default)
+  { value: 'Asia/Kolkata', label: 'India Standard Time (IST - Kolkata)' },
+
   // UTC
   { value: 'UTC', label: 'UTC' },
 
@@ -88,5 +91,5 @@ export const TIMEZONE_OPTIONS = [
 
 export function useDriverTimezone(): string {
   const driver = useAuth((s) => s.driver);
-  return driver?.timezone ?? 'America/New_York';
+  return driver?.timezone ?? 'Asia/Kolkata';
 }

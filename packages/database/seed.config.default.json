@@ -1,7 +1,7 @@
 {
   "settings": {
     "system.name": "EVtivity CSMS",
-    "system.timezone": "America/New_York",
+    "system.timezone": "Asia/Kolkata",
     "ocpp.heartbeatInterval": 300,
     "ocpp.meterValueInterval": 60,
     "ocpp.clockAlignedInterval": 60,

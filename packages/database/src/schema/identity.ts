@@ -47,7 +47,7 @@ export const users = pgTable(
     isActive: boolean('is_active').notNull().default(true),
     mustResetPassword: boolean('must_reset_password').notNull().default(false),
     language: varchar('language', { length: 10 }).notNull().default('en'),
-    timezone: varchar('timezone', { length: 50 }).notNull().default('America/New_York'),
+    timezone: varchar('timezone', { length: 50 }).notNull().default('Asia/Kolkata'),
     themePreference: varchar('theme_preference', { length: 10 }).notNull().default('light'),
     hasAllSiteAccess: boolean('has_all_site_access').notNull().default(false),
     mfaEnabled: boolean('mfa_enabled').notNull().default(false),

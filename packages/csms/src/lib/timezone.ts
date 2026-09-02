@@ -51,6 +51,9 @@ export function formatRelativeTime(timestamp: string | Date, timezone: string): 
 }
 
 export const TIMEZONE_OPTIONS = [
+  // India (Primary Default)
+  { value: 'Asia/Kolkata', label: 'India Standard Time (IST - Kolkata)' },
+
   // UTC
   { value: 'UTC', label: 'UTC' },
 
@@ -135,5 +138,5 @@ export const TIMEZONE_OPTIONS = [
 
 export function useUserTimezone(): string {
   const user = useAuth((s) => s.user);
-  return user?.timezone ?? 'America/New_York';
+  return user?.timezone ?? 'Asia/Kolkata';
 }

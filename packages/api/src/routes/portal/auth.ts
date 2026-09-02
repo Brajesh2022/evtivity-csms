@@ -416,7 +416,7 @@ export function portalAuthRoutes(app: FastifyInstance): void {
             isActive: true,
             emailVerified: true,
             language: 'en',
-            timezone: 'America/New_York',
+            timezone: 'Asia/Kolkata',
             themePreference: 'light',
             distanceUnit: 'miles',
           })
