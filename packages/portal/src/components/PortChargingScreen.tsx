@@ -34,29 +34,29 @@ export interface ConnectorDetail {
 export interface PortChargingScreenProps {
   station: {
     stationId: string;
-    siteId?: string | null;
-    siteName?: string | null;
-    siteAddress?: string | null;
-    siteCity?: string | null;
-    siteState?: string | null;
+    siteId?: string | null | undefined;
+    siteName?: string | null | undefined;
+    siteAddress?: string | null | undefined;
+    siteCity?: string | null | undefined;
+    siteState?: string | null | undefined;
     isOnline: boolean;
-    paymentEnabled?: boolean;
-    phonepeEnabled?: boolean;
-    phonepePreAuthPaisa?: number;
-    maintenance?: { active: boolean; plannedEndAt: string | null; message: string | null } | null;
+    paymentEnabled?: boolean | undefined;
+    phonepeEnabled?: boolean | undefined;
+    phonepePreAuthPaisa?: number | undefined;
+    maintenance?: { active: boolean; plannedEndAt: string | null; message: string | null } | null | undefined;
   };
   evse: {
     evseId: number;
     connectors: ConnectorDetail[];
-    reservationExpiresAt?: string | null;
+    reservationExpiresAt?: string | null | undefined;
   };
-  pricing?: PricingInfo | null;
+  pricing?: PricingInfo | null | undefined;
   onBack: () => void;
-  isFree?: boolean;
-  onStartFree?: () => Promise<void>;
-  isStartingFree?: boolean;
-  guestEmail?: string;
-  mobileNumber?: string;
+  isFree?: boolean | undefined;
+  onStartFree?: (() => Promise<void>) | undefined;
+  isStartingFree?: boolean | undefined;
+  guestEmail?: string | undefined;
+  mobileNumber?: string | undefined;
 }
 
 const PRESET_AMOUNTS = [100, 200, 500, 1000];
