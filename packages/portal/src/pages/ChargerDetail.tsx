@@ -42,6 +42,7 @@ import { formatConnectorType } from '@/lib/charger-utils';
 import { useStationEvents } from '@/hooks/use-station-events';
 import { useCableCheck } from '@/hooks/use-cable-check';
 import { PhonePeCheckoutButton } from '@/components/PhonePeCheckoutButton';
+import { PortChargingScreen } from '@/components/PortChargingScreen';
 
 interface ConnectorItem {
   connectorId: number;
@@ -403,21 +404,21 @@ export function ChargerDetail({ mode = 'charge' }: ChargerDetailProps = {}): Rea
     );
   }
 
-  // Auto-select the connector when exactly one is selectable, so a single-
-  // connector station is ready to start or reserve without a tap. Runs only
-  // while nothing is selected, so it never overrides a manual pick or the
-  // QR-scanned evse param.
-  if (selectedEvseId == null) {
-    const selectable = station.evses.filter((evse) =>
-      isEvseSelectable(evse, {
-        mode,
-        isOnline: station.isOnline,
-        maintenanceActive: station.maintenance?.active === true,
-        currentDriverId,
-      }),
-    );
-    if (selectable.length === 1 && selectable[0] != null) {
-      setSelectedEvseId(selectable[0].evseId);
+  // When a port is selected in charge mode, show the dedicated Port Charging Screen
+  if (mode === 'charge' && selectedEvseId != null) {
+    const selectedEvse = station.evses.find((e) => e.evseId === selectedEvseId);
+    if (selectedEvse != null) {
+      return (
+        <PortChargingScreen
+          station={station}
+          evse={selectedEvse}
+          pricing={pricing}
+          onBack={() => setSelectedEvseId(null)}
+          isFree={isFree}
+          onStartFree={handleStart}
+          isStartingFree={isStarting}
+        />
+      );
     }
   }
 

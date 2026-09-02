@@ -26,6 +26,7 @@ import {
 import { checkGuestConnectorStatus, formatConnectorType } from '@/lib/charger-utils';
 import { useStationEvents } from '@/hooks/use-station-events';
 import { useCableCheck } from '@/hooks/use-cable-check';
+import { PortChargingScreen } from '@/components/PortChargingScreen';
 
 interface ChargerInfo {
   stationId: string;
@@ -192,166 +193,21 @@ export function ChargerLanding(): React.JSX.Element {
     .filter((ct): ct is string => ct != null)
     .map(formatConnectorType);
 
-  const isCharging = ['charging', 'discharging'].includes(connectorStatus);
-  const isIdleState = ['suspended_ev', 'suspended_evse', 'idle'].includes(connectorStatus);
   return (
-    <div className="flex min-h-screen flex-col items-center justify-center p-4">
-      <AuthBranding companyName={companyName} companyLogo={companyLogo} />
-      <Card
-        className={cn(
-          'w-full max-w-sm',
-          isCharging && 'ring-2 ring-success animate-pulse',
-          isIdleState && 'ring-2 ring-warning animate-pulse',
-        )}
-      >
-        <CardHeader className="text-center">
-          <CardTitle>{charger.stationId}</CardTitle>
-          {charger.siteName != null && (
-            <p className="text-sm text-muted-foreground">{charger.siteName}</p>
-          )}
-        </CardHeader>
-        <CardContent className="space-y-4">
-          {charger.maintenance?.active === true && (
-            <div className="rounded-md border border-warning/40 bg-warning/10 p-3 text-left">
-              <p className="font-semibold text-sm">{t('charger.maintenanceTitle')}</p>
-              {charger.maintenance.plannedEndAt != null && (
-                <p className="mt-1 text-xs">
-                  {t('charger.maintenanceUntil', {
-                    time: new Date(charger.maintenance.plannedEndAt).toLocaleString(),
-                  })}
-                </p>
-              )}
-              {charger.maintenance.message != null && charger.maintenance.message.length > 0 && (
-                <p className="mt-1 text-xs">{charger.maintenance.message}</p>
-              )}
-            </div>
-          )}
-
-          {/* Location */}
-          {charger.siteAddress != null && charger.siteId != null ? (
-            <Link
-              to={`/location/${charger.siteId}?from=${encodeURIComponent(`/charge/${stationId ?? ''}/${evseId ?? ''}`)}`}
-              className="flex items-start gap-2 text-sm text-primary hover:underline transition-colors"
-            >
-              <MapPin className="h-4 w-4 mt-0.5 text-muted-foreground" />
-              <span>
-                {charger.siteAddress}
-                {charger.siteCity != null && `, ${charger.siteCity}`}
-                {charger.siteState != null && `, ${charger.siteState}`}
-              </span>
-            </Link>
-          ) : charger.siteAddress != null ? (
-            <div className="flex items-start gap-2 text-sm">
-              <MapPin className="h-4 w-4 mt-0.5 text-muted-foreground" />
-              <span>
-                {charger.siteAddress}
-                {charger.siteCity != null && `, ${charger.siteCity}`}
-                {charger.siteState != null && `, ${charger.siteState}`}
-              </span>
-            </div>
-          ) : null}
-
-          {isAvailable && charger.isOnline && (
-            <>
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-2 text-sm">
-                  <Plug className="h-4 w-4 text-muted-foreground" />
-                  <span>{connectorTypes.join(', ')}</span>
-                  {(maxPower > 0 || maxCurrent > 0) && (
-                    <span className="text-muted-foreground">
-                      {maxPower > 0 ? `${String(maxPower)} kW` : ''}
-                      {maxPower > 0 && maxCurrent > 0 ? ' / ' : ''}
-                      {maxCurrent > 0 ? `${String(maxCurrent)}A` : ''}
-                    </span>
-                  )}
-                </div>
-                <Badge
-                  variant={connectorStatusVariant()}
-                  className={connectorStatusClassName(connectorStatus)}
-                >
-                  {t(`status.${connectorStatus}`)}
-                </Badge>
-              </div>
-              {displayPricing != null && <PricingDisplay pricing={displayPricing} />}
-            </>
-          )}
-
-          {/* Actions */}
-          {guestConfig == null ? (
-            <p className="pt-2 text-center text-sm text-muted-foreground">
-              {t('charger.loadingInfo')}
-            </p>
-          ) : isReserved ? (
-            <p className="pt-2 text-center text-sm text-destructive font-medium">
-              {t('charger.connectorReserved')}
-            </p>
-          ) : isAvailable && charger.isOnline ? (
-            <div className="space-y-2 pt-2">
-              {freeStartError !== '' && (
-                <p className="text-sm text-destructive">{freeStartError}</p>
-              )}
-              {isFreeForGuest ? (
-                <Button
-                  className="w-full"
-                  size="lg"
-                  disabled={freeStartLoading || isCheckingStatus}
-                  onClick={() => void handleFreeStartCheck()}
-                >
-                  {isCheckingStatus
-                    ? t('charger.checkingStatus')
-                    : freeStartLoading
-                      ? t('guest.processing')
-                      : t('charger.startCharging')}
-                </Button>
-              ) : paymentNotConfigured ? (
-                <p className="text-sm text-muted-foreground text-center">
-                  {t('guest.paymentNotConfigured')}
-                </p>
-              ) : (
-                <Button
-                  className="w-full"
-                  size="lg"
-                  disabled={isCheckingStatus}
-                  onClick={() => void handlePaidCheck()}
-                >
-                  {isCheckingStatus ? t('charger.checkingStatus') : t('charger.payWithCard')}
-                </Button>
-              )}
-              <Button
-                variant="outline"
-                className="w-full"
-                onClick={() => {
-                  void navigate('/login');
-                }}
-              >
-                {t('charger.signIn')}
-              </Button>
-            </div>
-          ) : (
-            <p className="pt-2 text-center text-sm text-muted-foreground">
-              {t('charger.stationNotAvailable')}
-            </p>
-          )}
-        </CardContent>
-      </Card>
-      <AuthFooter companyName={companyName} branding={branding} />
-      <ConfirmDialog
-        open={showEvWarning}
-        onOpenChange={setShowEvWarning}
-        title={t('charger.evNotDetectedTitle')}
-        description={t('charger.evNotDetectedDescription')}
-        confirmLabel={t('common.ok')}
-        hideCancel
-        onConfirm={() => undefined}
-      >
-        <EvPlugAnimation />
-        {charger.isSimulator && (
-          <Alert variant="info" className="mt-4">
-            <Info className="h-4 w-4" />
-            <AlertDescription>{t('charger.simulatorPlugInHint')}</AlertDescription>
-          </Alert>
-        )}
-      </ConfirmDialog>
-    </div>
+    <PortChargingScreen
+      station={charger}
+      evse={charger.evse}
+      pricing={displayPricing}
+      onBack={() => {
+        if (stationId != null) {
+          void navigate(`/charge/${stationId}`);
+        } else {
+          void navigate('/');
+        }
+      }}
+      isFree={isFreeForGuest}
+      onStartFree={handleFreeStartCheck}
+      isStartingFree={freeStartLoading}
+    />
   );
 }
