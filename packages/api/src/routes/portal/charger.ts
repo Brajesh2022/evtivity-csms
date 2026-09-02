@@ -86,6 +86,7 @@ const portalChargerDetail = z
     siteAddress: z.string().max(500).nullable().describe('Street address'),
     siteCity: z.string().max(100).nullable().describe('City'),
     siteState: z.string().max(100).nullable().describe('State or region'),
+    hoursOfOperation: z.string().nullable().optional().describe('Operating hours of the site'),
     paymentEnabled: z
       .boolean()
       .describe('Whether payment gateway is configured for this site and payment is required'),
@@ -157,6 +158,7 @@ const portalStationDetail = z
       .max(50)
       .nullable()
       .describe('Public site contact phone (null when contact is private)'),
+    hoursOfOperation: z.string().nullable().optional().describe('Operating hours of the site'),
     paymentEnabled: z
       .boolean()
       .describe('Whether payment gateway is configured for this site and payment is required'),
@@ -480,6 +482,7 @@ export function portalChargerRoutes(app: FastifyInstance): void {
           siteAddress: sites.address,
           siteCity: sites.city,
           siteState: sites.state,
+          hoursOfOperation: sites.hoursOfOperation,
         })
         .from(chargingStations)
         .leftJoin(sites, eq(chargingStations.siteId, sites.id))
@@ -560,6 +563,7 @@ export function portalChargerRoutes(app: FastifyInstance): void {
         siteAddress: station.siteAddress,
         siteCity: station.siteCity,
         siteState: station.siteState,
+        hoursOfOperation: station.hoursOfOperation ?? null,
         paymentEnabled: config != null || (phonePeConfig != null && phonePeConfig.isEnabled),
         phonepeEnabled: phonePeConfig != null && phonePeConfig.isEnabled,
         phonepePreAuthPaisa: phonePeConfig?.defaultPreAuthAmountPaisa,
@@ -1286,6 +1290,7 @@ export function portalChargerRoutes(app: FastifyInstance): void {
           siteContactEmail: sites.contactEmail,
           siteContactPhone: sites.contactPhone,
           siteContactIsPublic: sites.contactIsPublic,
+          hoursOfOperation: sites.hoursOfOperation,
         })
         .from(chargingStations)
         .leftJoin(sites, eq(chargingStations.siteId, sites.id))
@@ -1404,6 +1409,7 @@ export function portalChargerRoutes(app: FastifyInstance): void {
         siteContactName: isContactPublic ? station.siteContactName : null,
         siteContactEmail: isContactPublic ? station.siteContactEmail : null,
         siteContactPhone: isContactPublic ? station.siteContactPhone : null,
+        hoursOfOperation: station.hoursOfOperation ?? null,
         paymentEnabled: config != null || (phonePeConfig != null && phonePeConfig.isEnabled),
         phonepeEnabled: phonePeConfig != null && phonePeConfig.isEnabled,
         evses: Array.from(evseMap.values()).map((e) => ({

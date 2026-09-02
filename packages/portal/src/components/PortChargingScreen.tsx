@@ -14,7 +14,6 @@ import {
   MapPin,
   ShieldCheck,
   Zap,
-  CheckCircle2,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useAuthBranding } from '@/components/AuthBranding';
@@ -39,6 +38,7 @@ export interface PortChargingScreenProps {
     siteAddress?: string | null | undefined;
     siteCity?: string | null | undefined;
     siteState?: string | null | undefined;
+    hoursOfOperation?: string | null | undefined;
     isOnline: boolean;
     paymentEnabled?: boolean | undefined;
     phonepeEnabled?: boolean | undefined;
@@ -197,37 +197,38 @@ export function PortChargingScreen({
   }
 
   return (
-    <div className="min-h-screen bg-background text-foreground flex flex-col justify-between pb-24 max-w-md mx-auto px-4 pt-4">
-      {/* Top Bar */}
-      <div>
-        <div className="flex items-center justify-between mb-6">
+    <div className="fixed inset-0 z-50 bg-background text-foreground flex flex-col justify-between overflow-y-auto overscroll-none">
+      {/* Scrollable Main Content */}
+      <div className="w-full max-w-md mx-auto px-4 pt-3 pb-6 flex-1 flex flex-col">
+        {/* Top Navigation Row */}
+        <div className="flex items-center justify-between mb-2">
           <button
             type="button"
             onClick={onBack}
-            className="p-2 -ml-2 rounded-full hover:bg-muted/80 text-foreground transition-colors"
+            className="p-2 -ml-2 rounded-full hover:bg-muted text-foreground transition-colors cursor-pointer"
             aria-label="Back"
           >
             <ArrowLeft className="h-6 w-6" />
           </button>
         </div>
 
-        {/* Avatar & Organization Details */}
-        <div className="flex flex-col items-center text-center mb-6">
+        {/* Avatar & Brand Header */}
+        <div className="flex flex-col items-center text-center mb-5">
           {companyLogo ? (
             <img
               src={companyLogo}
               alt={displayName}
-              className="w-20 h-20 rounded-full object-contain border border-emerald-200 shadow-sm mb-3 bg-white p-2"
+              className="w-16 h-16 rounded-full object-contain border border-emerald-200 shadow-sm mb-2 bg-white p-1.5"
             />
           ) : (
-            <div className="w-20 h-20 rounded-full bg-[#dcfce7] dark:bg-emerald-950/60 text-[#15803d] dark:text-emerald-400 font-semibold text-2xl flex items-center justify-center border border-[#bbf7d0] dark:border-emerald-800 shadow-xs mb-3">
+            <div className="w-16 h-16 rounded-full bg-[#dcfce7] dark:bg-emerald-950/60 text-[#15803d] dark:text-emerald-400 font-semibold text-xl flex items-center justify-center border border-[#bbf7d0] dark:border-emerald-800 shadow-xs mb-2">
               {initials}
             </div>
           )}
 
-          <span className="text-xs text-muted-foreground font-medium mb-0.5">Paying</span>
-          <h1 className="text-xl font-bold tracking-tight text-foreground">{displayName}</h1>
-          <p className="text-xs text-muted-foreground mt-0.5 mb-2.5">
+          <span className="text-[11px] text-muted-foreground font-medium mb-0.5">Paying</span>
+          <h1 className="text-xl font-bold tracking-tight text-foreground leading-tight">{displayName}</h1>
+          <p className="text-xs text-muted-foreground mt-0.5 mb-2">
             {station.stationId} • {station.siteName || 'Downtown Fast Charging Hub'}
           </p>
 
@@ -236,19 +237,19 @@ export function PortChargingScreen({
             station.siteId ? (
               <Link
                 to={`/location/${station.siteId}?from=${encodeURIComponent(window.location.pathname)}`}
-                className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-full border border-border/70 bg-card text-xs text-foreground shadow-2xs hover:bg-muted/60 transition-colors"
+                className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full border border-border/80 bg-card text-xs text-foreground shadow-2xs hover:bg-muted/60 transition-colors"
               >
-                <MapPin className="h-3.5 w-3.5 text-emerald-600 dark:text-emerald-400" />
-                <span>
+                <MapPin className="h-3.5 w-3.5 text-emerald-600 dark:text-emerald-400 shrink-0" />
+                <span className="truncate max-w-[280px]">
                   {station.siteAddress}
                   {station.siteCity ? `, ${station.siteCity}` : ''}
                   {station.siteState ? `, ${station.siteState}` : ''}
                 </span>
               </Link>
             ) : (
-              <div className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-full border border-border/70 bg-card text-xs text-foreground shadow-2xs">
-                <MapPin className="h-3.5 w-3.5 text-emerald-600 dark:text-emerald-400" />
-                <span>
+              <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full border border-border/80 bg-card text-xs text-foreground shadow-2xs">
+                <MapPin className="h-3.5 w-3.5 text-emerald-600 dark:text-emerald-400 shrink-0" />
+                <span className="truncate max-w-[280px]">
                   {station.siteAddress}
                   {station.siteCity ? `, ${station.siteCity}` : ''}
                   {station.siteState ? `, ${station.siteState}` : ''}
@@ -258,16 +259,16 @@ export function PortChargingScreen({
           )}
         </div>
 
-        {/* Status & Port Pill Card */}
-        <div className="w-full bg-card border border-border/80 rounded-2xl p-3 shadow-xs mb-6">
+        {/* Status & Port Info Card */}
+        <div className="w-full bg-card border border-border/80 rounded-2xl p-3 shadow-xs mb-4">
           <div className="flex items-center justify-between">
             {/* Online Dropdown Button */}
             <button
               type="button"
               onClick={() => setIsHoursOpen((prev) => !prev)}
-              className="flex items-center gap-2 pl-2 text-sm font-medium hover:opacity-80 transition-opacity cursor-pointer"
+              className="flex items-center gap-1.5 pl-2 text-sm font-medium hover:opacity-80 transition-opacity cursor-pointer"
             >
-              <span className="h-2.5 w-2.5 rounded-full bg-emerald-500 animate-pulse" />
+              <span className={cn('h-2.5 w-2.5 rounded-full', station.isOnline ? 'bg-emerald-500 animate-pulse' : 'bg-destructive')} />
               <span>{station.isOnline ? 'Online' : 'Offline'}</span>
               {isHoursOpen ? (
                 <ChevronUp className="h-4 w-4 text-muted-foreground" />
@@ -296,17 +297,23 @@ export function PortChargingScreen({
                   <Clock className="h-3.5 w-3.5 text-emerald-600" /> Operating Schedule
                 </span>
                 <span className="text-emerald-600 dark:text-emerald-400 font-semibold">
-                  24 Hours Open (24/7)
+                  {station.hoursOfOperation || (station.isOnline ? '24 Hours Open (24/7)' : 'Offline')}
                 </span>
               </div>
-              <p>• Monday – Sunday: All-day continuous service</p>
-              <p>• Fast DC CCS2 charging with dynamic power delivery</p>
+              {station.hoursOfOperation ? (
+                <p className="whitespace-pre-line">{station.hoursOfOperation}</p>
+              ) : (
+                <>
+                  <p>• {station.isOnline ? 'Station is operational and ready for charging' : 'Station is currently offline'}</p>
+                  <p>• Dynamic power delivery up to {powerKw} kW ({connectorType})</p>
+                </>
+              )}
             </div>
           )}
         </div>
 
         {/* Amount Input Hero Area */}
-        <div className="flex flex-col items-center text-center my-4">
+        <div className="flex flex-col items-center text-center my-3">
           <label htmlFor="charge-amount-input" className="text-xs text-muted-foreground font-medium mb-1">
             Enter amount
           </label>
@@ -373,7 +380,7 @@ export function PortChargingScreen({
         </div>
 
         {/* Suggested Amounts Divider & Chips */}
-        <div className="w-full max-w-sm mx-auto my-5">
+        <div className="w-full max-w-sm mx-auto my-3">
           <div className="relative flex py-2 items-center">
             <div className="flex-grow border-t border-border/70" />
             <span className="flex-shrink mx-3 text-xs text-muted-foreground font-normal">
@@ -382,7 +389,7 @@ export function PortChargingScreen({
             <div className="flex-grow border-t border-border/70" />
           </div>
 
-          <div className="grid grid-cols-4 gap-2.5 mt-2">
+          <div className="grid grid-cols-4 gap-2 mt-1">
             {PRESET_AMOUNTS.map((amt) => {
               const isSelected = amount === amt;
               return (
@@ -405,7 +412,7 @@ export function PortChargingScreen({
         </div>
 
         {/* Information Notice Banner */}
-        <div className="w-full max-w-sm mx-auto rounded-xl bg-[#ecfdf5] dark:bg-emerald-950/40 border border-[#a7f3d0] dark:border-emerald-900/60 p-3.5 flex items-start gap-3 mt-4 mb-6 shadow-2xs">
+        <div className="w-full max-w-sm mx-auto rounded-xl bg-[#ecfdf5] dark:bg-emerald-950/40 border border-[#a7f3d0] dark:border-emerald-900/60 p-3.5 flex items-start gap-3 mt-3 mb-2 shadow-2xs">
           <Info className="h-5 w-5 text-emerald-700 dark:text-emerald-400 shrink-0 mt-0.5" />
           <p className="text-xs text-emerald-950 dark:text-emerald-200 leading-relaxed font-normal">
             You will be charged based on the energy (kWh) delivered until you stop the charging session.
@@ -413,39 +420,41 @@ export function PortChargingScreen({
         </div>
       </div>
 
-      {/* Main Action CTA Button */}
-      <div className="w-full max-w-sm mx-auto pt-2">
-        <Button
-          type="button"
-          onClick={() => {
-            if (isFree) {
-              void handleProceedPayment();
-            } else {
-              setIsBottomSheetOpen(true);
-            }
-          }}
-          disabled={isStartingFree || isSubmittingPayment || !station.isOnline}
-          className="w-full h-12 rounded-xl bg-[#064e3b] hover:bg-[#065f46] active:bg-[#022c22] text-white font-semibold text-base shadow-sm flex items-center justify-center gap-2 transition-all cursor-pointer"
-        >
-          {isStartingFree || isSubmittingPayment ? (
-            <>
-              <Loader2 className="h-5 w-5 animate-spin" />
-              <span>Connecting...</span>
-            </>
-          ) : (
-            <>
-              <Zap className="h-5 w-5 fill-current" />
-              <span>Pay & Start Charging</span>
-            </>
-          )}
-        </Button>
+      {/* Sticky Bottom Pay CTA Button Bar */}
+      <div className="sticky bottom-0 left-0 right-0 z-30 bg-background/95 backdrop-blur-md pt-2 pb-6 px-4 border-t border-border/30">
+        <div className="w-full max-w-md mx-auto">
+          <Button
+            type="button"
+            onClick={() => {
+              if (isFree) {
+                void handleProceedPayment();
+              } else {
+                setIsBottomSheetOpen(true);
+              }
+            }}
+            disabled={isStartingFree || isSubmittingPayment || !station.isOnline}
+            className="w-full h-12 rounded-xl bg-[#064e3b] hover:bg-[#065f46] active:bg-[#022c22] text-white font-semibold text-base shadow-md flex items-center justify-center gap-2 transition-all cursor-pointer"
+          >
+            {isStartingFree || isSubmittingPayment ? (
+              <>
+                <Loader2 className="h-5 w-5 animate-spin" />
+                <span>Connecting...</span>
+              </>
+            ) : (
+              <>
+                <Zap className="h-5 w-5 fill-current" />
+                <span>Pay & Start Charging</span>
+              </>
+            )}
+          </Button>
+        </div>
       </div>
 
       {/* Payment Selection Bottom Sheet (Android Style, No Popups) */}
       {isBottomSheetOpen && (
         <div className="fixed inset-0 z-50 flex items-end justify-center bg-black/60 backdrop-blur-xs transition-opacity animate-in fade-in duration-200">
           <div
-            className="w-full max-w-md bg-card border-t border-border/80 rounded-t-3xl p-5 shadow-2xl animate-in slide-in-from-bottom-10 duration-300 space-y-4"
+            className="w-full max-w-md bg-card border-t border-border/80 rounded-t-3xl p-5 shadow-2xl animate-in slide-in-from-bottom-10 duration-300 space-y-4 max-h-[85vh] overflow-y-auto"
             onClick={(e) => e.stopPropagation()}
           >
             {/* Top Handle Bar */}
