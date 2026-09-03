@@ -94,7 +94,7 @@ export function Account(): React.JSX.Element {
               <p className="text-xs text-muted-foreground">
                 {t(
                   'account.guestDesc',
-                  'You are using EVtivity without signing in. Save your account to sync charging history and cards across devices.',
+                  'You are using ACEIT Mobility without signing in. Save your account to sync charging history and cards across devices.',
                 )}
               </p>
               <div className="pt-2">

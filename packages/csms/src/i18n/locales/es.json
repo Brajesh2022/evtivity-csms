@@ -162,7 +162,7 @@
     "logOut": "Cerrar sesion",
     "sustainability": "Sostenibilidad",
     "conformance": "Conformidad",
-    "poweredBy": "Impulsado por EVtivity CSMS",
+    "poweredBy": "Impulsado por ACEIT Mobility",
     "collapseSidebar": "Contraer barra lateral",
     "expandSidebar": "Expandir barra lateral",
     "openMenu": "Abrir menu",
@@ -258,7 +258,7 @@
     }
   },
   "auth": {
-    "title": "EVtivity CSMS",
+    "title": "ACEIT Mobility",
     "subtitle": "Inicie sesion en su cuenta",
     "signIn": "Iniciar sesion",
     "signingIn": "Iniciando sesion...",
@@ -2905,7 +2905,7 @@
   },
   "updateCheck": {
     "title": "Actualizacion disponible",
-    "description": "EVtivity CSMS {{version}} ya esta disponible.",
+    "description": "ACEIT Mobility {{version}} ya esta disponible.",
     "viewRelease": "Ver notas de la version"
   },
   "messages": {

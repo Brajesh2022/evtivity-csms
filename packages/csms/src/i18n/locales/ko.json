@@ -162,7 +162,7 @@
     "logOut": "로그아웃",
     "sustainability": "지속가능성",
     "conformance": "적합성",
-    "poweredBy": "Powered by EVtivity CSMS",
+    "poweredBy": "Powered by ACEIT Mobility",
     "collapseSidebar": "사이드바 접기",
     "expandSidebar": "사이드바 펼치기",
     "openMenu": "메뉴 열기",
@@ -258,7 +258,7 @@
     }
   },
   "auth": {
-    "title": "EVtivity CSMS",
+    "title": "ACEIT Mobility",
     "subtitle": "계정에 로그인하세요",
     "signIn": "로그인",
     "signingIn": "로그인 중...",
@@ -2889,7 +2889,7 @@
   },
   "updateCheck": {
     "title": "업데이트 사용 가능",
-    "description": "EVtivity CSMS {{version}} 사용 가능합니다.",
+    "description": "ACEIT Mobility {{version}} 사용 가능합니다.",
     "viewRelease": "릴리스 노트 보기"
   },
   "messages": {

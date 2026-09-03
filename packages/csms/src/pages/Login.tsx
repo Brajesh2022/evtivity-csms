@@ -145,7 +145,7 @@ export function Login(): React.JSX.Element {
           className="fixed top-8 right-0 inline-flex items-center gap-2 rounded-l-full px-5 py-3 text-sm font-medium text-primary-foreground shadow-md transition-opacity hover:opacity-90"
           style={{ backgroundColor: themeColor }}
         >
-          {companyName ?? 'EVtivity'} Charging Portal
+          {companyName ?? 'ACEIT Mobility'} Charging Portal
         </a>
       )}
       <AuthBranding companyName={companyName} companyLogo={companyLogo} />

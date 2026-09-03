@@ -36,7 +36,7 @@ export function CompanySettings({
   const faviconInputRef = useRef<HTMLInputElement>(null);
   const ogImageInputRef = useRef<HTMLInputElement>(null);
 
-  const [companyName, setCompanyName] = useState('EVtivity');
+  const [companyName, setCompanyName] = useState('ACEIT Mobility');
   const [companyCurrency, setCompanyCurrency] = useState('USD');
   const [companyContactEmail, setCompanyContactEmail] = useState('');
   const [companySupportEmail, setCompanySupportEmail] = useState('');
@@ -57,7 +57,7 @@ export function CompanySettings({
       const v = settings[key];
       return typeof v === 'string' || typeof v === 'number' ? String(v) : '';
     };
-    setCompanyName(s('company.name') || 'EVtivity');
+    setCompanyName(s('company.name') || 'ACEIT Mobility');
     setCompanyCurrency(s('company.currency') || 'INR');
     setCompanyContactEmail(s('company.contactEmail'));
     setCompanySupportEmail(s('company.supportEmail'));

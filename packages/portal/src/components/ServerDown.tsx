@@ -14,7 +14,7 @@ export function ServerDown(): React.JSX.Element {
   return (
     <div className="flex min-h-screen items-center justify-center bg-background p-4">
       <div className="max-w-md space-y-6 text-center">
-        <img src="/evtivity-logo.svg" alt="EVtivity" className="mx-auto h-14 w-14" />
+        <img src="/evtivity-logo.svg" alt="ACEIT Mobility" className="mx-auto h-14 w-14" />
         <div className="space-y-2">
           <h1 className="text-2xl font-bold">{t('errors.serverDown')}</h1>
           <p className="text-sm text-muted-foreground">{t('errors.serverDownDescription')}</p>

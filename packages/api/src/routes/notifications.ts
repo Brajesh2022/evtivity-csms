@@ -880,8 +880,8 @@ export function notificationRoutes(app: FastifyInstance): void {
           await transport.sendMail({
             from: (settingsMap.get('smtp.from') as string | undefined) ?? '',
             to: recipient,
-            subject: 'EVtivity Test Notification',
-            text: 'This is a test notification from EVtivity CSMS. If you received this, email notifications are working.',
+            subject: 'ACEIT Mobility Test Notification',
+            text: 'This is a test notification from ACEIT Mobility. If you received this, email notifications are working.',
           });
           return { success: true };
         } catch (err) {

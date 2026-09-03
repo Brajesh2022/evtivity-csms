@@ -9,7 +9,7 @@ export async function registerOpenApi(app: FastifyInstance): Promise<void> {
   await app.register(swagger, {
     openapi: {
       info: {
-        title: 'EVtivity CSMS API',
+        title: 'ACEIT Mobility API',
         version: '2.0.0',
         description: [
           'Charging Station Management System REST API.',

@@ -162,7 +162,7 @@
     "logOut": "退出登入",
     "sustainability": "可持續發展",
     "conformance": "合規測試",
-    "poweredBy": "由 EVtivity CSMS 提供支援",
+    "poweredBy": "由 ACEIT Mobility 提供支援",
     "collapseSidebar": "摺疊側邊欄",
     "expandSidebar": "展開側邊欄",
     "openMenu": "開啟選單",
@@ -258,7 +258,7 @@
     }
   },
   "auth": {
-    "title": "EVtivity CSMS",
+    "title": "ACEIT Mobility",
     "subtitle": "登入您的賬戶",
     "signIn": "登入",
     "signingIn": "登入中...",
@@ -2889,7 +2889,7 @@
   },
   "updateCheck": {
     "title": "有可用更新",
-    "description": "EVtivity CSMS {{version}} 現已發布。",
+    "description": "ACEIT Mobility {{version}} 現已發布。",
     "viewRelease": "查看發行說明"
   },
   "messages": {
