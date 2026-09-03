@@ -616,7 +616,7 @@ export function userRoutes(app: FastifyInstance): void {
             for (const row of companyRows) {
               if (typeof row.value === 'string') companyMap.set(row.key as string, row.value);
             }
-            const companyName = companyMap.get('company.name') ?? 'EVtivity CSMS';
+            const companyName = companyMap.get('company.name') ?? 'ACEIT Mobility';
             const language = user.language;
 
             const enrichedVars: Record<string, unknown> = {
@@ -2236,7 +2236,7 @@ export function userRoutes(app: FastifyInstance): void {
 
       if (method === 'totp') {
         const secret = generateTotpSecret();
-        const uri = generateTotpUri(secret, user.email, 'EVtivity CSMS');
+        const uri = generateTotpUri(secret, user.email, 'ACEIT Mobility');
         const qrDataUri = await QRCode.toDataURL(uri);
 
         // Store secret temporarily encrypted

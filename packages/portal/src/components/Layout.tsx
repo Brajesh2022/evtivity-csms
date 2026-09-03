@@ -91,10 +91,10 @@ export function Layout(): React.JSX.Element {
         >
           <img
             src={companyLogo ?? '/evtivity-logo-animated.svg'}
-            alt={companyName ?? 'EVtivity'}
+            alt={companyName ?? 'ACEIT Mobility'}
             className="h-6 w-6 object-contain"
           />
-          <span className="font-bold">{companyName ?? 'EVtivity'}</span>
+          <span className="font-bold">{companyName ?? 'ACEIT Mobility'}</span>
         </button>
         <div className="flex items-center gap-2">
           <button

@@ -173,7 +173,7 @@ export function NotificationSettings({ settings }: NotificationSettingsProps): R
       const compiled = Handlebars.compile(emailWrapperTemplate);
       return compiled({
         content: SAMPLE_EMAIL_BODY,
-        companyName: sv('company.name') || 'EVtivity',
+        companyName: sv('company.name') || 'ACEIT Mobility',
         companyCurrency: sv('company.currency') || 'USD',
         companyContactEmail: sv('company.contactEmail'),
         companySupportEmail: sv('company.supportEmail'),

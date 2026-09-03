@@ -102,7 +102,7 @@ export function InvoiceDetail(): React.JSX.Element {
     typeof settings['company.name'] === 'string' &&
     settings['company.name'] !== ''
       ? settings['company.name']
-      : 'EVtivity';
+      : 'ACEIT Mobility';
   const companyLogo =
     settings != null &&
     typeof settings['company.logo'] === 'string' &&

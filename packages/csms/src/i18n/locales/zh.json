@@ -162,7 +162,7 @@
     "logOut": "退出登录",
     "sustainability": "可持续发展",
     "conformance": "合规测试",
-    "poweredBy": "由 EVtivity CSMS 提供支持",
+    "poweredBy": "由 ACEIT Mobility 提供支持",
     "collapseSidebar": "折叠侧边栏",
     "expandSidebar": "展开侧边栏",
     "openMenu": "打开菜单",
@@ -258,7 +258,7 @@
     }
   },
   "auth": {
-    "title": "EVtivity CSMS",
+    "title": "ACEIT Mobility",
     "subtitle": "登录您的账户",
     "signIn": "登录",
     "signingIn": "登录中...",
@@ -2900,7 +2900,7 @@
   },
   "updateCheck": {
     "title": "有可用更新",
-    "description": "EVtivity CSMS {{version}} 现已发布。",
+    "description": "ACEIT Mobility {{version}} 现已发布。",
     "viewRelease": "查看发布说明"
   },
   "messages": {

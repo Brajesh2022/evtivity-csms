@@ -59,7 +59,7 @@ export function useAuthBranding(): {
 
   useEffect(() => {
     if (branding == null) return;
-    const name = companyName ?? 'EVtivity';
+    const name = companyName ?? 'ACEIT Mobility';
     document.title = `${name} CSMS`;
     setFavicon(branding.favicon ?? '');
     setMetaTag('name', 'description', branding.metaDescription ?? '');
@@ -85,13 +85,13 @@ export function AuthBranding({
     <div className="mb-4 flex flex-col items-center gap-2">
       <img
         src={companyLogo ?? '/evtivity-logo-animated.svg'}
-        alt={companyName ?? 'EVtivity'}
+        alt={companyName ?? 'ACEIT Mobility'}
         className="h-20 w-20 object-contain"
       />
       {companyName != null && (
         <div className="text-center">
           <h1 className="text-3xl font-bold">{companyName}</h1>
-          <p className="text-[10px] text-muted-foreground">Powered by EVtivity CSMS</p>
+          <p className="text-[10px] text-muted-foreground">Powered by ACEIT Mobility</p>
         </div>
       )}
     </div>
@@ -114,7 +114,7 @@ export function AuthFooter({
   recaptchaEnabled?: boolean | undefined;
 }): React.JSX.Element {
   const year = new Date().getFullYear();
-  const name = companyName ?? 'EVtivity';
+  const name = companyName ?? 'ACEIT Mobility';
   return (
     <footer className="mt-6 text-center text-xs text-muted-foreground space-y-1">
       <p>
