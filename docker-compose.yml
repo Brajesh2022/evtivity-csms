@@ -5,7 +5,7 @@ services:
     image: postgres:17
     restart: unless-stopped
     ports:
-      - '5433:5432'
+      - '127.0.0.1:5433:5432'
     environment:
       POSTGRES_USER: evtivity
       POSTGRES_PASSWORD: evtivity
@@ -24,7 +24,7 @@ services:
     image: redis:8-alpine
     restart: unless-stopped
     ports:
-      - '6379:6379'
+      - '127.0.0.1:6379:6379'
     volumes:
       - redisdata:/data
     mem_limit: 1g
@@ -110,7 +110,7 @@ services:
     ports:
       - '${BIND_IP:-0.0.0.0}:${OCPP_PORT:-7103}:${OCPP_PORT:-7103}'
       - '${BIND_IP:-0.0.0.0}:8443:8443'
-      - '${BIND_IP:-0.0.0.0}:9229:9229'
+      - '127.0.0.1:9229:9229'
     mem_limit: 4g
     cpus: 2.0
     environment:
